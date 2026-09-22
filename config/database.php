@@ -10,6 +10,8 @@
 // On Railway, DATABASE_URL looks like: mysql://user:password@host:port/database
 $databaseUrl = getenv('DATABASE_URL');
 
+error_log('DEBUG DATABASE_URL is: ' . var_export($databaseUrl, true));
+
 if ($databaseUrl) {
     $dbParts = parse_url($databaseUrl);
     define('DB_HOST', $dbParts['host']);
