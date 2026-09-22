@@ -1,270 +1,739 @@
 <?php
 /**
- * Global Configuration & Helper Functions
- * Web-Based Prenatal Health Center Booking Appointment and Record Management System
+ * Examine Patient (Healthcare Worker) - Dynamic Form by Service
  */
 
-// Start session if not already started
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../includes/auth_check.php';
+
+requireRole('healthcare_worker');
+
+$pageTitle = "Examine Patient";
+$activePage = "appointments";
+$userId = getCurrentUserId();
+
+$appointmentId = (int)($_GET['id'] ?? 0);
+
+if (!$appointmentId) {
+    die("Error: No appointment selected. <a href='appointments.php'>Back to Appointments</a>");
 }
 
-// App Information
-define('APP_NAME', 'MaternalCare Prenatal Health System');
-define('APP_VERSION', '1.0.0');
+$errorMsg = '';
 
-// Clinic timezone. XAMPP ships with a Europe/Berlin default, which would make
-// "today" and slot times wrong by ~6 hours for a Philippine clinic.
-define('APP_TIMEZONE', 'Asia/Manila');
-date_default_timezone_set(APP_TIMEZONE);
+try {
+    $db = getDB();
 
-// Base URL Determination
-// Railway (and most PaaS hosts) terminate TLS at a reverse proxy, so the app
-// itself sees a plain HTTP connection. HTTPS is signaled via the
-// X-Forwarded-Proto header instead of $_SERVER['HTTPS'] in that case.
-$isHttps = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on')
-    || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
-    || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443);
-$protocol = $isHttps ? "https" : "http";
-$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-$script_name = $_SERVER['SCRIPT_NAME'] ?? '';
-$dir = str_replace('\\', '/', dirname($script_name));
-// Ensure root relative URL path
-$base_path = rtrim(preg_replace('#/(config|admin|worker|patient|api|includes)$#', '', $dir), '/');
-define('BASE_URL', $protocol . "://" . $host . ($base_path ? $base_path : '') . "/");
+    // Kuhaon ang appointment + service info
+    $stmt = $db->prepare("
+        SELECT a.*, s.service_name, u.full_name as patient_name, u.phone as patient_phone,
+               p.patient_code, p.id as patient_id, p.gravida, p.para, p.blood_type, p.dob, p.lmp,
+               p.address, p.emergency_contact_name, p.emergency_contact_phone
+        FROM appointments a
+        JOIN patients p ON a.patient_id = p.id
+        JOIN users u ON p.user_id = u.id
+        JOIN services s ON a.service_id = s.id
+        WHERE a.id = ?
+    ");
+    $stmt->execute([$appointmentId]);
+    $appointment = $stmt->fetch();
 
-require_once __DIR__ . '/database.php';
-
-// Generate or fetch CSRF token
-function getCsrfToken() {
-    if (empty($_SESSION['csrf_token'])) {
-        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    if (!$appointment) {
+        die("Error: Appointment not found. <a href='appointments.php'>Back to Appointments</a>");
     }
-    return $_SESSION['csrf_token'];
-}
 
-function verifyCsrfToken($token) {
-    return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
-}
-
-// Security: XSS Sanitization
-function sanitize($data) {
-    if (is_array($data)) {
-        return array_map('sanitize', $data);
+    if ($appointment['status'] !== 'confirmed') {
+        die("Error: Only confirmed appointments can be examined. <a href='appointments.php'>Back</a>");
     }
-    return htmlspecialchars(trim((string)$data), ENT_QUOTES, 'UTF-8');
-}
 
-// Audit Logger
-function logAudit($action, $details = '') {
-    try {
-        $db = getDB();
-        $user_id = $_SESSION['user_id'] ?? null;
-        $user_role = $_SESSION['user_role'] ?? 'guest';
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+    // ============================================
+    // DETERMINE SERVICE TYPE
+    // ============================================
+    $serviceName = strtolower($appointment['service_name']);
 
-        $stmt = $db->prepare("INSERT INTO audit_logs (user_id, user_role, action, details, ip_address) VALUES (?, ?, ?, ?, ?)");
-        $stmt->execute([$user_id, $user_role, $action, $details, $ip]);
-    } catch (Exception $e) {
-        // Silently fail to avoid breaking user operations if audit log table fails
-    }
-}
+    $isUltrasound = (
+        strpos($serviceName, 'ultrasound') !== false ||
+        strpos($serviceName, 'pelvic') !== false ||
+        strpos($serviceName, '3d') !== false ||
+        strpos($serviceName, 'sonograph') !== false
+    );
 
-// Notification Helper
-function createNotification($user_id, $title, $message, $type = 'system') {
-    try {
-        $db = getDB();
-        $stmt = $db->prepare("INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$user_id, $title, $message, $type]);
-    } catch (Exception $e) {
-        // Fail silently
-    }
-}
+    $isLab = (
+        strpos($serviceName, 'lab') !== false ||
+        strpos($serviceName, 'blood') !== false ||
+        strpos($serviceName, 'urine') !== false ||
+        strpos($serviceName, 'test') !== false
+    );
 
-function notifyStaff($title, $message, $type = 'system') {
-    try {
-        $db = getDB();
-        $stmt = $db->prepare("SELECT id FROM users WHERE role IN ('healthcare_worker', 'admin')");
-        $stmt->execute();
-        $staffIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    $isVaccine = (
+        strpos($serviceName, 'tetanus') !== false ||
+        strpos($serviceName, 'immunization') !== false ||
+        strpos($serviceName, 'vaccine') !== false ||
+        strpos($serviceName, 'toxoid') !== false
+    );
 
-        $insert = $db->prepare("INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, ?)");
-        foreach ($staffIds as $uid) {
-            $insert->execute([$uid, $title, $message, $type]);
-        }
-    } catch (Exception $e) {
-        // Fail silently
-    }
-}
+    $isScreening = (
+        strpos($serviceName, 'screening') !== false ||
+        strpos($serviceName, 'high-risk') !== false ||
+        strpos($serviceName, 'high risk') !== false
+    );
 
-// Format Date nicely
-function formatDate($dateStr, $format = 'M d, Y') {
-    if (!$dateStr) return 'N/A';
-    return date($format, strtotime($dateStr));
-}
+    $isPostnatal = (
+        strpos($serviceName, 'postnatal') !== false ||
+        strpos($serviceName, 'family planning') !== false ||
+        strpos($serviceName, 'postnatal') !== false
+    );
 
-// Calculate Estimated Due Date (EDD) using Naegele's Rule (LMP + 280 days / + 9 months + 7 days)
-function calculateEDD($lmpDateStr) {
-    if (!$lmpDateStr) return null;
-    $lmp = new DateTime($lmpDateStr);
-    $edd = clone $lmp;
-    $edd->modify('+280 days');
-    return $edd->format('Y-m-d');
-}
+    $isRoutine = !$isUltrasound && !$isLab && !$isVaccine && !$isScreening && !$isPostnatal;
 
-// Calculate Gestational Age in Weeks from LMP
-function calculateGestationalAgeWeeks($lmpDateStr, $targetDateStr = 'now') {
-    if (!$lmpDateStr) return 0;
-    $lmp = new DateTime($lmpDateStr);
-    $target = new DateTime($targetDateStr);
-    $interval = $lmp->diff($target);
-    $days = $interval->days;
-    return floor($days / 7);
-}
+    // ============================================
+    // HANDLE POST SUBMISSION
+    // ============================================
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $csrf = $_POST['csrf_token'] ?? '';
+        if (!verifyCsrfToken($csrf)) {
+            $errorMsg = "Security token error. Please refresh and try again.";
+        } else {
+            // Common fields
+            $riskAssessment = $_POST['risk_assessment'] ?? 'low_risk';
+            $clinicalNotes = trim($_POST['clinical_notes'] ?? '');
+            $nextVisitDate = $_POST['next_visit_date'] ?? null;
 
-// Current User Accessors
-function isLoggedIn() {
-    return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
-}
+            // Initialize all fields as null
+            $weight = null;
+            $systolic = null;
+            $diastolic = null;
+            $temperature = null;
+            $pulseRate = null;
+            $respiratoryRate = null;
+            $fetalHeartRate = null;
+            $fundalHeight = null;
+            $fetalPresentation = null;
+            $edema = 'none';
+            $urineProtein = 'Negative';
+            $urineSugar = 'Negative';
+            $gestationalAge = null;
+            $vitaminsPrescribed = null;
+            $ironFolicGiven = null;
+            $tetanusVaccineGiven = null;
 
-function getCurrentUserRole() {
-    return $_SESSION['user_role'] ?? null;
-}
+            $hasError = false;
 
-function getCurrentUserId() {
-    return $_SESSION['user_id'] ?? null;
-}
+            // ============================================
+            // ROUTINE PRENATAL CONSULTATION
+            // ============================================
+            if ($isRoutine) {
+                $weight = trim($_POST['weight_kg'] ?? '');
+                $systolic = trim($_POST['systolic_bp'] ?? '');
+                $diastolic = trim($_POST['diastolic_bp'] ?? '');
+                $temperature = trim($_POST['temperature'] ?? '');
+                $pulseRate = trim($_POST['pulse_rate'] ?? '');
+                $respiratoryRate = trim($_POST['respiratory_rate'] ?? '');
+                $fetalHeartRate = trim($_POST['fetal_heart_rate'] ?? '');
+                $fundalHeight = trim($_POST['fundal_height_cm'] ?? '');
+                $fetalPresentation = trim($_POST['fetal_presentation'] ?? '');
+                $edema = trim($_POST['edema'] ?? 'none');
+                $urineProtein = trim($_POST['urine_protein'] ?? 'Negative');
+                $urineSugar = trim($_POST['urine_sugar'] ?? 'Negative');
+                $gestationalAge = trim($_POST['gestational_age_weeks'] ?? '');
 
-function getCurrentUserName() {
-    return $_SESSION['full_name'] ?? 'User';
-}
-
-
-// True when a stored password is not a usable bcrypt hash (e.g. the placeholder hash
-// shipped in the old database.sql). Used only to let untouched demo accounts sign in once.
-function hasUnusablePasswordHash($hash) {
-    $info = password_get_info((string)$hash);
-    return empty($info['algo']);
-}
-
-/**
- * Brings an older database up to the schema the code expects (adds missing columns/indexes).
- * Runs once per browser session, so existing installs keep working without re-importing database.sql.
- */
-function ensureSchemaUpgrades() {
-    // Bumped to schema-7: gestational_age_weeks was still NOT NULL on installs where
-    // the column predated this migration (ADD COLUMN is skipped if it already exists,
-    // so schema-6 never relaxed it). Several Examine Patient forms (Lab, Vaccine,
-    // Postnatal) never submit this field at all, so every save from those screens
-    // was failing with a constraint violation. Bumping the marker forces every
-    // session to re-check and pick up the MODIFY COLUMN below.
-    $marker = APP_VERSION . '-schema-7';
-    if (($_SESSION['schema_ok'] ?? '') === $marker) return;
-
-    try {
-        $db = getDB();
-        if ($db->query("SHOW TABLES LIKE 'users'")->rowCount() === 0) return; // not installed yet
-
-        $hasColumn = function ($table, $column) use ($db) {
-            $q = $db->prepare("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?");
-            $q->execute([$table, $column]);
-            return (int)$q->fetchColumn() > 0;
-        };
-        $add = function ($table, $column, $definition) use ($db, $hasColumn) {
-            if (!$hasColumn($table, $column)) {
-                $db->exec("ALTER TABLE `$table` ADD COLUMN `$column` $definition");
+                if (empty($weight) || empty($systolic) || empty($diastolic) || empty($fetalHeartRate)) {
+                    $errorMsg = "Please fill in all required fields (Weight, BP, Fetal HR).";
+                    $hasError = true;
+                }
             }
-        };
-        // Unlike $add(), this always runs — used for columns that may already exist
-        // with the wrong definition (e.g. NOT NULL when the code needs NULL allowed).
-        $modify = function ($table, $column, $definition) use ($db) {
-            $db->exec("ALTER TABLE `$table` MODIFY COLUMN `$column` $definition");
-        };
 
-        $add('users', 'address', 'TEXT DEFAULT NULL');
-        $add('users', 'avatar', 'VARCHAR(255) DEFAULT NULL');
-        $add('users', 'deleted_at', 'TIMESTAMP NULL DEFAULT NULL');
-        $add('users', 'room', 'VARCHAR(100) DEFAULT NULL');
-        $add('appointments', 'room', 'VARCHAR(100) DEFAULT NULL');
-        $add('appointments', 'worker_notified', 'TINYINT(1) NOT NULL DEFAULT 0');
-        $add('appointments', 'worker_confirmed_at', 'DATETIME DEFAULT NULL');
-        $add('prenatal_records', 'weight_kg', 'DECIMAL(5,2) DEFAULT NULL');
-        $add('prenatal_records', 'systolic_bp', 'SMALLINT DEFAULT NULL');
-        $add('prenatal_records', 'diastolic_bp', 'SMALLINT DEFAULT NULL');
-        $add('prenatal_records', 'temperature', 'DECIMAL(4,1) DEFAULT NULL');
-        $add('prenatal_records', 'pulse_rate', 'SMALLINT DEFAULT NULL');
-        $add('prenatal_records', 'respiratory_rate', 'SMALLINT DEFAULT NULL');
-        $add('prenatal_records', 'fetal_heart_rate', 'SMALLINT DEFAULT NULL');
-        $add('prenatal_records', 'fundal_height_cm', 'DECIMAL(4,1) DEFAULT NULL');
-        $add('prenatal_records', 'fetal_presentation', 'VARCHAR(50) DEFAULT NULL');
-        $add('prenatal_records', 'edema', "VARCHAR(20) DEFAULT 'none'");
-        $add('prenatal_records', 'urine_protein', "VARCHAR(20) DEFAULT 'Negative'");
-        $add('prenatal_records', 'urine_sugar', "VARCHAR(20) DEFAULT 'Negative'");
-        $add('prenatal_records', 'gestational_age_weeks', 'SMALLINT DEFAULT NULL');
-        $add('prenatal_records', 'risk_assessment', "VARCHAR(20) DEFAULT 'low_risk'");
-        $add('prenatal_records', 'clinical_notes', 'TEXT DEFAULT NULL');
-        $add('prenatal_records', 'next_visit_date', 'DATE DEFAULT NULL');
-        $add('prenatal_records', 'vitamins_prescribed', 'VARCHAR(255) DEFAULT NULL');
-        $add('prenatal_records', 'iron_folic_given', 'VARCHAR(255) DEFAULT NULL');
-        $add('prenatal_records', 'tetanus_vaccine_given', 'VARCHAR(100) DEFAULT NULL');
+            // ============================================
+            // OBSTETRIC ULTRASOUND
+            // ============================================
+            if ($isUltrasound) {
+                $fetalHeartRate = trim($_POST['fetal_heart_rate'] ?? '');
+                $fundalHeight = trim($_POST['fundal_height_cm'] ?? '');
+                $fetalPresentation = trim($_POST['fetal_presentation'] ?? '');
+                $gestationalAge = trim($_POST['gestational_age_weeks'] ?? '');
 
-        // gestational_age_weeks predates this migration as NOT NULL on some installs.
-        // $add() above is a no-op there since the column already exists, so force it
-        // nullable explicitly.
-        $modify('prenatal_records', 'gestational_age_weeks', 'SMALLINT DEFAULT NULL');
+                if (empty($fetalHeartRate)) {
+                    $errorMsg = "Please fill in Fetal Heart Rate.";
+                    $hasError = true;
+                }
+            }
 
-        $type = $db->query("SELECT COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'status'")->fetchColumn();
-        if ($type && stripos($type, 'archived') === false) {
-            $db->exec("ALTER TABLE users MODIFY COLUMN status ENUM('active', 'inactive', 'archived') NOT NULL DEFAULT 'active'");
+            // ============================================
+            // LABORATORY TESTS
+            // ============================================
+            if ($isLab) {
+                $urineProtein = trim($_POST['urine_protein'] ?? 'Negative');
+                $urineSugar = trim($_POST['urine_sugar'] ?? 'Negative');
+                $weight = trim($_POST['weight_kg'] ?? '');
+                $systolic = trim($_POST['systolic_bp'] ?? '');
+                $diastolic = trim($_POST['diastolic_bp'] ?? '');
+
+                if (empty($urineProtein) || empty($urineSugar)) {
+                    $errorMsg = "Please fill in Urine Protein and Urine Sugar.";
+                    $hasError = true;
+                }
+            }
+
+            // ============================================
+            // VACCINE / IMMUNIZATION
+            // ============================================
+            if ($isVaccine) {
+                $tetanusVaccineGiven = trim($_POST['tetanus_vaccine_given'] ?? '');
+                $vitaminsPrescribed = trim($_POST['vitamins_prescribed'] ?? '');
+                $ironFolicGiven = trim($_POST['iron_folic_given'] ?? '');
+
+                if (empty($tetanusVaccineGiven)) {
+                    $errorMsg = "Please specify the vaccine given.";
+                    $hasError = true;
+                }
+            }
+
+            // ============================================
+            // HIGH-RISK SCREENING
+            // ============================================
+            if ($isScreening) {
+                $weight = trim($_POST['weight_kg'] ?? '');
+                $systolic = trim($_POST['systolic_bp'] ?? '');
+                $diastolic = trim($_POST['diastolic_bp'] ?? '');
+                $fetalHeartRate = trim($_POST['fetal_heart_rate'] ?? '');
+                $fundalHeight = trim($_POST['fundal_height_cm'] ?? '');
+                $edema = trim($_POST['edema'] ?? 'none');
+                $urineProtein = trim($_POST['urine_protein'] ?? 'Negative');
+                $urineSugar = trim($_POST['urine_sugar'] ?? 'Negative');
+                $gestationalAge = trim($_POST['gestational_age_weeks'] ?? '');
+                $riskAssessment = $_POST['risk_assessment'] ?? 'high_risk';
+
+                if (empty($weight) || empty($systolic) || empty($diastolic)) {
+                    $errorMsg = "Please fill in Weight and Blood Pressure.";
+                    $hasError = true;
+                }
+            }
+
+            // ============================================
+            // POSTNATAL CHECKUP
+            // ============================================
+            if ($isPostnatal) {
+                $weight = trim($_POST['weight_kg'] ?? '');
+                $systolic = trim($_POST['systolic_bp'] ?? '');
+                $diastolic = trim($_POST['diastolic_bp'] ?? '');
+                $temperature = trim($_POST['temperature'] ?? '');
+                $pulseRate = trim($_POST['pulse_rate'] ?? '');
+
+                if (empty($weight) || empty($systolic) || empty($diastolic)) {
+                    $errorMsg = "Please fill in Weight and Blood Pressure.";
+                    $hasError = true;
+                }
+            }
+
+            // Lab/Vaccine/Postnatal forms don't collect gestational age directly.
+            // Fall back to computing it from the patient's LMP so the record still
+            // carries a meaningful value instead of NULL.
+            if (empty($gestationalAge) && !empty($appointment['lmp'])) {
+                $gestationalAge = calculateGestationalAgeWeeks($appointment['lmp'], $appointment['appointment_date']);
+            }
+
+            // ============================================
+            // SAVE TO DATABASE
+            // ============================================
+            if (!$hasError) {
+                try {
+                    $db->beginTransaction();
+
+                    $stmt = $db->prepare("
+                        INSERT INTO prenatal_records 
+                        (patient_id, appointment_id, healthcare_worker_id, visit_date, 
+                         weight_kg, systolic_bp, diastolic_bp, temperature, pulse_rate, respiratory_rate,
+                         fetal_heart_rate, fundal_height_cm, fetal_presentation,
+                         edema, urine_protein, urine_sugar,
+                         gestational_age_weeks, risk_assessment, clinical_notes, 
+                         next_visit_date, vitamins_prescribed, iron_folic_given, tetanus_vaccine_given,
+                         created_at)
+                        VALUES (?, ?, ?, CURDATE(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                    ");
+                    $stmt->execute([
+                        $appointment['patient_id'],
+                        $appointmentId,
+                        $userId,
+                        $weight ?: null,
+                        $systolic ?: null,
+                        $diastolic ?: null,
+                        $temperature ?: null,
+                        $pulseRate ?: null,
+                        $respiratoryRate ?: null,
+                        $fetalHeartRate ?: null,
+                        $fundalHeight ?: null,
+                        $fetalPresentation ?: null,
+                        $edema,
+                        $urineProtein,
+                        $urineSugar,
+                        $gestationalAge ?: null,
+                        $riskAssessment,
+                        $clinicalNotes ?: null,
+                        $nextVisitDate ?: null,
+                        $vitaminsPrescribed ?: null,
+                        $ironFolicGiven ?: null,
+                        $tetanusVaccineGiven ?: null
+                    ]);
+
+                    // Update appointment status
+                    $stmt = $db->prepare("UPDATE appointments SET status = 'completed', updated_at = NOW() WHERE id = ?");
+                    $stmt->execute([$appointmentId]);
+
+                    // Notify patient
+                    $stmt = $db->prepare("
+                        INSERT INTO notifications (user_id, title, message, type)
+                        SELECT u.id, ?, ?, 'system'
+                        FROM users u
+                        JOIN patients p ON p.user_id = u.id
+                        WHERE p.id = ?
+                    ");
+                    $stmt->execute([
+                        "Examination Completed",
+                        "Your {$appointment['service_name']} examination has been completed. Please check your prenatal records.",
+                        $appointment['patient_id']
+                    ]);
+
+                    $db->commit();
+                    logAudit('EXAMINE_COMPLETED', "Completed {$appointment['service_name']} for {$appointment['appointment_code']}");
+
+                    header("Location: appointments.php?success=" . urlencode("Examination saved successfully!"));
+                    exit;
+
+                } catch (Exception $e) {
+                    if ($db->inTransaction()) $db->rollBack();
+                    $errorMsg = "Error saving examination: " . $e->getMessage();
+                }
+            }
         }
-
-        // Speeds up the live slot counters (they read this table every few seconds)
-        $idx = $db->query("SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'appointments' AND INDEX_NAME = 'idx_appt_date_service'")->fetchColumn();
-        if ((int)$idx === 0) {
-            $db->exec("ALTER TABLE appointments ADD INDEX idx_appt_date_service (appointment_date, service_id, status)");
-        }
-
-        $_SESSION['schema_ok'] = $marker;
-    } catch (Exception $e) {
-        // Never break a page because a migration could not run
     }
+
+} catch (Exception $e) {
+    die("Error: " . $e->getMessage());
 }
 
-// Returns the patients row for a user, creating an empty profile if a patient account was
-// created without one (e.g. by an admin) so booking never fails on a missing profile.
-function ensurePatientProfile($db, $userId) {
-    $stmt = $db->prepare("SELECT * FROM patients WHERE user_id = ?");
-    $stmt->execute([$userId]);
-    $patient = $stmt->fetch();
-    if ($patient) return $patient;
+include __DIR__ . '/../includes/header.php';
+?>
 
-    $code = "PN-" . date('Y') . "-" . str_pad((string)$userId, 4, '0', STR_PAD_LEFT);
-    $ins = $db->prepare("INSERT INTO patients (user_id, patient_code, address, blood_type, gravida, para) VALUES (?, ?, '', 'A+', 1, 0)");
-    $ins->execute([$userId, $code]);
-    $stmt->execute([$userId]);
-    return $stmt->fetch();
+<style>
+.service-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 0.5rem;
 }
+.service-badge.routine { background: #fff5ed; color: #ea580c; }
+.service-badge.ultrasound { background: #e0f2fe; color: #0369a1; }
+.service-badge.lab { background: #fef3c7; color: #92400e; }
+.service-badge.vaccine { background: #f3e5f5; color: #7b1fa2; }
+.service-badge.screening { background: #fee2e2; color: #991b1b; }
+.service-badge.postnatal { background: #d1fae5; color: #065f46; }
+</style>
 
-// UTF-8 safe text helpers (work even if the mbstring extension is switched off)
-function clipText($text, $max) {
-    return preg_match('/^.{0,' . (int)$max . '}/us', (string)$text, $m) ? $m[0] : substr((string)$text, 0, (int)$max);
-}
-function textLength($text) {
-    return (int)preg_match_all('/./us', (string)$text);
-}
+<div class="page-header">
+    <div class="page-title">
+        <h1>
+            Examine Patient
+            <?php if ($isRoutine): ?><span class="service-badge routine">Prenatal</span><?php endif; ?>
+            <?php if ($isUltrasound): ?><span class="service-badge ultrasound">Ultrasound</span><?php endif; ?>
+            <?php if ($isLab): ?><span class="service-badge lab">Laboratory</span><?php endif; ?>
+            <?php if ($isVaccine): ?><span class="service-badge vaccine">Vaccine</span><?php endif; ?>
+            <?php if ($isScreening): ?><span class="service-badge screening">High-Risk Screening</span><?php endif; ?>
+            <?php if ($isPostnatal): ?><span class="service-badge postnatal">Postnatal</span><?php endif; ?>
+        </h1>
+        <p><?php echo sanitize($appointment['service_name']); ?></p>
+    </div>
+    <div>
+        <a href="appointments.php" class="btn btn-outline">
+            <i class="fa-solid fa-arrow-left"></i> Back
+        </a>
+    </div>
+</div>
 
-// System Logo Image Helper
-function getSystemLogoUrl() {
-    try {
-        $db = getDB();
-        $stmt = $db->prepare("SELECT setting_value FROM system_settings WHERE setting_key = 'system_logo' LIMIT 1");
-        $stmt->execute();
-        $logo = $stmt->fetchColumn();
-        if ($logo && file_exists(__DIR__ . '/../' . $logo)) {
-            return BASE_URL . $logo;
-        }
-    } catch (Exception $e) {}
-    return null;
-}
+<?php if ($errorMsg): ?>
+    <div class="alert alert-danger mb-4">
+        <i class="fa-solid fa-circle-exclamation"></i> <?php echo sanitize($errorMsg); ?>
+    </div>
+<?php endif; ?>
 
-ensureSchemaUpgrades();
+<!-- Patient Info -->
+<div class="dashboard-card" style="padding: 1.5rem; margin-bottom: 1rem;">
+    <h3 style="margin-bottom: 1rem;"><i class="fa-solid fa-user text-primary"></i> Patient Information</h3>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:1rem;">
+        <div><small class="text-muted">Patient Name</small><p style="margin:0;"><strong><?php echo sanitize($appointment['patient_name']); ?></strong></p></div>
+        <div><small class="text-muted">Patient Code</small><p style="margin:0;"><strong><?php echo sanitize($appointment['patient_code']); ?></strong></p></div>
+        <div><small class="text-muted">Phone</small><p style="margin:0;"><strong><?php echo sanitize($appointment['patient_phone']); ?></strong></p></div>
+        <div><small class="text-muted">Service</small><p style="margin:0;"><strong><?php echo sanitize($appointment['service_name']); ?></strong></p></div>
+        <div><small class="text-muted">Date</small><p style="margin:0;"><strong><?php echo formatDate($appointment['appointment_date']); ?></strong></p></div>
+        <div><small class="text-muted">Time</small><p style="margin:0;"><strong><?php echo date('g:i A', strtotime($appointment['appointment_time'])); ?></strong></p></div>
+    </div>
+</div>
+
+<form method="POST" action="">
+    <input type="hidden" name="csrf_token" value="<?php echo getCsrfToken(); ?>">
+
+    <!-- ============================================ -->
+    <!-- ROUTINE PRENATAL CONSULTATION -->
+    <!-- ============================================ -->
+    <?php if ($isRoutine): ?>
+    <div class="dashboard-card" style="padding: 1.5rem; margin-bottom: 1rem;">
+        <h3 style="margin-bottom: 0.5rem;">
+            <i class="fa-solid fa-stethoscope text-primary"></i> Prenatal Consultation Findings
+        </h3>
+        <p class="text-muted" style="font-size:0.85rem; margin-bottom:1rem;">
+            Complete examination para sa routine prenatal checkup.
+        </p>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem;">
+            <div class="form-group">
+                <label class="form-label">Weight (kg) <span class="text-danger">*</span></label>
+                <input type="text" name="weight_kg" class="form-control" placeholder="e.g. 62.50" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Systolic BP (mmHg) <span class="text-danger">*</span></label>
+                <input type="text" name="systolic_bp" class="form-control" placeholder="e.g. 118" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Diastolic BP (mmHg) <span class="text-danger">*</span></label>
+                <input type="text" name="diastolic_bp" class="form-control" placeholder="e.g. 76" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Temperature (°C)</label>
+                <input type="text" name="temperature" class="form-control" placeholder="e.g. 36.8">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Pulse Rate (bpm)</label>
+                <input type="text" name="pulse_rate" class="form-control" placeholder="e.g. 80">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Respiratory Rate (bpm)</label>
+                <input type="text" name="respiratory_rate" class="form-control" placeholder="e.g. 18">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Fetal Heart Rate (bpm) <span class="text-danger">*</span></label>
+                <input type="text" name="fetal_heart_rate" class="form-control" placeholder="e.g. 140" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Fundal Height (cm)</label>
+                <input type="text" name="fundal_height_cm" class="form-control" placeholder="e.g. 26">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Gestational Age (weeks)</label>
+                <input type="number" name="gestational_age_weeks" class="form-control" placeholder="e.g. 26" min="1" max="45">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Fetal Presentation</label>
+                <select name="fetal_presentation" class="form-control">
+                    <option value="">-- Select --</option>
+                    <option value="Cephalic">Cephalic</option>
+                    <option value="Breech">Breech</option>
+                    <option value="Transverse">Transverse</option>
+                    <option value="Oblique">Oblique</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Edema</label>
+                <select name="edema" class="form-control">
+                    <option value="none">None</option>
+                    <option value="mild">Mild</option>
+                    <option value="moderate">Moderate</option>
+                    <option value="severe">Severe</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Urine Protein</label>
+                <select name="urine_protein" class="form-control">
+                    <option value="Negative">Negative</option>
+                    <option value="Trace">Trace</option>
+                    <option value="1+">1+</option>
+                    <option value="2+">2+</option>
+                    <option value="3+">3+</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Urine Sugar</label>
+                <select name="urine_sugar" class="form-control">
+                    <option value="Negative">Negative</option>
+                    <option value="Trace">Trace</option>
+                    <option value="1+">1+</option>
+                    <option value="2+">2+</option>
+                    <option value="3+">3+</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <!-- ============================================ -->
+    <!-- OBSTETRIC ULTRASOUND -->
+    <!-- ============================================ -->
+    <?php if ($isUltrasound): ?>
+    <div class="dashboard-card" style="padding: 1.5rem; margin-bottom: 1rem;">
+        <h3 style="margin-bottom: 0.5rem;">
+            <i class="fa-solid fa-wave-square text-primary"></i> Ultrasound Findings
+        </h3>
+        <p class="text-muted" style="font-size:0.85rem; margin-bottom:1rem;">
+            Ultrasound scan results ug fetal measurements.
+        </p>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem;">
+            <div class="form-group">
+                <label class="form-label">Fetal Heart Rate (bpm) <span class="text-danger">*</span></label>
+                <input type="text" name="fetal_heart_rate" class="form-control" placeholder="e.g. 140" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Fetal Presentation</label>
+                <select name="fetal_presentation" class="form-control">
+                    <option value="">-- Select --</option>
+                    <option value="Cephalic">Cephalic</option>
+                    <option value="Breech">Breech</option>
+                    <option value="Transverse">Transverse</option>
+                    <option value="Oblique">Oblique</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Fundal Height (cm)</label>
+                <input type="text" name="fundal_height_cm" class="form-control" placeholder="e.g. 26">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Gestational Age (weeks)</label>
+                <input type="number" name="gestational_age_weeks" class="form-control" placeholder="e.g. 26" min="1" max="45">
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <!-- ============================================ -->
+    <!-- LABORATORY TESTS -->
+    <!-- ============================================ -->
+    <?php if ($isLab): ?>
+    <div class="dashboard-card" style="padding: 1.5rem; margin-bottom: 1rem;">
+        <h3 style="margin-bottom: 0.5rem;">
+            <i class="fa-solid fa-vials text-primary"></i> Laboratory Test Results
+        </h3>
+        <p class="text-muted" style="font-size:0.85rem; margin-bottom:1rem;">
+            Blood ug urine test results.
+        </p>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem;">
+            <div class="form-group">
+                <label class="form-label">Urine Protein <span class="text-danger">*</span></label>
+                <select name="urine_protein" class="form-control" required>
+                    <option value="Negative">Negative</option>
+                    <option value="Trace">Trace</option>
+                    <option value="1+">1+</option>
+                    <option value="2+">2+</option>
+                    <option value="3+">3+</option>
+                    <option value="4+">4+</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Urine Sugar <span class="text-danger">*</span></label>
+                <select name="urine_sugar" class="form-control" required>
+                    <option value="Negative">Negative</option>
+                    <option value="Trace">Trace</option>
+                    <option value="1+">1+</option>
+                    <option value="2+">2+</option>
+                    <option value="3+">3+</option>
+                    <option value="4+">4+</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Weight (kg)</label>
+                <input type="text" name="weight_kg" class="form-control" placeholder="e.g. 62.50">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Systolic BP (mmHg)</label>
+                <input type="text" name="systolic_bp" class="form-control" placeholder="e.g. 118">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Diastolic BP (mmHg)</label>
+                <input type="text" name="diastolic_bp" class="form-control" placeholder="e.g. 76">
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <!-- ============================================ -->
+    <!-- VACCINE / IMMUNIZATION -->
+    <!-- ============================================ -->
+    <?php if ($isVaccine): ?>
+    <div class="dashboard-card" style="padding: 1.5rem; margin-bottom: 1rem;">
+        <h3 style="margin-bottom: 0.5rem;">
+            <i class="fa-solid fa-syringe text-primary"></i> Immunization Details
+        </h3>
+        <p class="text-muted" style="font-size:0.85rem; margin-bottom:1rem;">
+            Vaccine administration ug supplements.
+        </p>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem;">
+            <div class="form-group">
+                <label class="form-label">Tetanus Vaccine Given <span class="text-danger">*</span></label>
+                <input type="text" name="tetanus_vaccine_given" class="form-control" placeholder="e.g. TT2" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Vitamins Prescribed</label>
+                <input type="text" name="vitamins_prescribed" class="form-control" placeholder="e.g. Prenatal Multivitamins & Calcium">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Iron / Folic Acid Given</label>
+                <input type="text" name="iron_folic_given" class="form-control" placeholder="e.g. 1 tablet daily">
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <!-- ============================================ -->
+    <!-- HIGH-RISK PRENATAL SCREENING -->
+    <!-- ============================================ -->
+    <?php if ($isScreening): ?>
+    <div class="dashboard-card" style="padding: 1.5rem; margin-bottom: 1rem;">
+        <h3 style="margin-bottom: 0.5rem;">
+            <i class="fa-solid fa-shield-halved text-primary"></i> High-Risk Prenatal Screening
+        </h3>
+        <p class="text-muted" style="font-size:0.85rem; margin-bottom:1rem;">
+            Detailed screening para sa high-risk pregnancies.
+        </p>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem;">
+            <div class="form-group">
+                <label class="form-label">Weight (kg) <span class="text-danger">*</span></label>
+                <input type="text" name="weight_kg" class="form-control" placeholder="e.g. 62.50" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Systolic BP (mmHg) <span class="text-danger">*</span></label>
+                <input type="text" name="systolic_bp" class="form-control" placeholder="e.g. 140" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Diastolic BP (mmHg) <span class="text-danger">*</span></label>
+                <input type="text" name="diastolic_bp" class="form-control" placeholder="e.g. 90" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Fetal Heart Rate (bpm)</label>
+                <input type="text" name="fetal_heart_rate" class="form-control" placeholder="e.g. 140">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Fundal Height (cm)</label>
+                <input type="text" name="fundal_height_cm" class="form-control" placeholder="e.g. 26">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Gestational Age (weeks)</label>
+                <input type="number" name="gestational_age_weeks" class="form-control" placeholder="e.g. 26" min="1" max="45">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Edema</label>
+                <select name="edema" class="form-control">
+                    <option value="none">None</option>
+                    <option value="mild">Mild</option>
+                    <option value="moderate">Moderate</option>
+                    <option value="severe">Severe</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Urine Protein</label>
+                <select name="urine_protein" class="form-control">
+                    <option value="Negative">Negative</option>
+                    <option value="Trace">Trace</option>
+                    <option value="1+">1+</option>
+                    <option value="2+">2+</option>
+                    <option value="3+">3+</option>
+                    <option value="4+">4+</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Urine Sugar</label>
+                <select name="urine_sugar" class="form-control">
+                    <option value="Negative">Negative</option>
+                    <option value="Trace">Trace</option>
+                    <option value="1+">1+</option>
+                    <option value="2+">2+</option>
+                    <option value="3+">3+</option>
+                    <option value="4+">4+</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <!-- ============================================ -->
+    <!-- POSTNATAL CHECKUP -->
+    <!-- ============================================ -->
+    <?php if ($isPostnatal): ?>
+    <div class="dashboard-card" style="padding: 1.5rem; margin-bottom: 1rem;">
+        <h3 style="margin-bottom: 0.5rem;">
+            <i class="fa-solid fa-baby text-primary"></i> Postnatal Checkup & Family Planning
+        </h3>
+        <p class="text-muted" style="font-size:0.85rem; margin-bottom:1rem;">
+            Post-delivery checkup ug family planning assessment.
+        </p>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem;">
+            <div class="form-group">
+                <label class="form-label">Weight (kg) <span class="text-danger">*</span></label>
+                <input type="text" name="weight_kg" class="form-control" placeholder="e.g. 55.00" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Systolic BP (mmHg) <span class="text-danger">*</span></label>
+                <input type="text" name="systolic_bp" class="form-control" placeholder="e.g. 110" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Diastolic BP (mmHg) <span class="text-danger">*</span></label>
+                <input type="text" name="diastolic_bp" class="form-control" placeholder="e.g. 70" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Temperature (°C)</label>
+                <input type="text" name="temperature" class="form-control" placeholder="e.g. 36.6">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Pulse Rate (bpm)</label>
+                <input type="text" name="pulse_rate" class="form-control" placeholder="e.g. 76">
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <!-- ============================================ -->
+    <!-- COMMON: Assessment & Follow-up -->
+    <!-- ============================================ -->
+    <div class="dashboard-card" style="padding: 1.5rem; margin-bottom: 1rem;">
+        <h3 style="margin-bottom: 0.5rem;">
+            <i class="fa-solid fa-notes-medical text-primary"></i> Assessment & Follow-up
+        </h3>
+        <p class="text-muted" style="font-size:0.85rem; margin-bottom:1rem;">
+            Risk assessment, clinical notes, ug next visit schedule.
+        </p>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-bottom:1rem;">
+            <div class="form-group">
+                <label class="form-label">Risk Assessment <span class="text-danger">*</span></label>
+                <select name="risk_assessment" class="form-control" required>
+                    <option value="low_risk" <?php echo $isScreening ? '' : 'selected'; ?>>Low Risk</option>
+                    <option value="moderate_risk">Moderate Risk</option>
+                    <option value="high_risk" <?php echo $isScreening ? 'selected' : ''; ?>>High Risk</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Next Visit Date</label>
+                <input type="date" name="next_visit_date" class="form-control" min="<?php echo date('Y-m-d'); ?>">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Clinical Notes</label>
+            <textarea name="clinical_notes" class="form-control" rows="4" placeholder="Observations, findings, recommendations..."></textarea>
+        </div>
+    </div>
+
+    <div style="display:flex; gap:0.75rem; justify-content:flex-end; margin-bottom: 2rem;">
+        <a href="appointments.php" class="btn btn-outline">Cancel</a>
+        <button type="submit" class="btn btn-primary btn-lg">
+            <i class="fa-solid fa-floppy-disk"></i> Save Examination
+        </button>
+    </div>
+</form>
+
+<?php include __DIR__ . '/../includes/footer.php'; ?>
