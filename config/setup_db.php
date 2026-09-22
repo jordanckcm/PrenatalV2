@@ -21,6 +21,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || isset($_GET['auto'])) {
 
         $sqlContent = file_get_contents($sqlFile);
         
+        // Redirect the hardcoded 'prenatal' database name to whatever DB Railway actually gave us
+        $sqlContent = str_replace('`prenatal`', '`' . DB_NAME . '`', $sqlContent);
+        
         // Execute multi-query statements
         $pdo->exec($sqlContent);
 
