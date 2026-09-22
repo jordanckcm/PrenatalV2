@@ -7,12 +7,24 @@
 // ============================================
 // DATABASE CREDENTIALS
 // ============================================
-// Reads Railway's MySQL env vars when present, falls back to local XAMPP values.
-define('DB_HOST', getenv('MYSQLHOST') ?: 'localhost');
-define('DB_USER', getenv('MYSQLUSER') ?: 'root');
-define('DB_PASS', getenv('MYSQLPASSWORD') ?: '');
-define('DB_NAME', getenv('MYSQLDATABASE') ?: 'prenatal');
-define('DB_PORT', getenv('MYSQLPORT') ?: 3306);
+// On Railway, DATABASE_URL looks like: mysql://user:password@host:port/database
+$databaseUrl = getenv('DATABASE_URL');
+
+if ($databaseUrl) {
+    $dbParts = parse_url($databaseUrl);
+    define('DB_HOST', $dbParts['host']);
+    define('DB_USER', $dbParts['user']);
+    define('DB_PASS', $dbParts['pass']);
+    define('DB_NAME', ltrim($dbParts['path'], '/'));
+    define('DB_PORT', $dbParts['port'] ?? 3306);
+} else {
+    // Local XAMPP fallback
+    define('DB_HOST', 'localhost');
+    define('DB_USER', 'root');
+    define('DB_PASS', '');
+    define('DB_NAME', 'prenatal');
+    define('DB_PORT', 3306);
+}
 
 class Database {
     private static $instance = null;
