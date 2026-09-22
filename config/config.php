@@ -19,7 +19,13 @@ define('APP_TIMEZONE', 'Asia/Manila');
 date_default_timezone_set(APP_TIMEZONE);
 
 // Base URL Determination
-$protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? "https" : "http";
+// Railway (and most PaaS hosts) terminate TLS at a reverse proxy, so the app
+// itself sees a plain HTTP connection. HTTPS is signaled via the
+// X-Forwarded-Proto header instead of $_SERVER['HTTPS'] in that case.
+$isHttps = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on')
+    || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+    || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443);
+$protocol = $isHttps ? "https" : "http";
 $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 $script_name = $_SERVER['SCRIPT_NAME'] ?? '';
 $dir = str_replace('\\', '/', dirname($script_name));
