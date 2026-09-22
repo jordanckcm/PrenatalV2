@@ -7,19 +7,12 @@
 // ============================================
 // DATABASE CREDENTIALS
 // ============================================
-// Para sa LOCAL (XAMPP):
-// define('DB_HOST', 'localhost');
-// define('DB_USER', 'root');
-// define('DB_PASS', '');
-// define('DB_NAME', 'prenatal');
-// define('DB_PORT', 3307);
-
-// Para sa LIVE SERVER (i-update kini base sa imong hosting):
-define('DB_HOST', 'localhost');           // Usually 'localhost' sa shared hosting
-define('DB_USER', 'root');   // ← ILISI ni
-define('DB_PASS', '');   // ← ILISI ni
-define('DB_NAME', 'prenatal');       // ← ILISI ni
-define('DB_PORT', 3306);                  // ← 3306 para sa live server
+// Reads Railway's MySQL env vars when present, falls back to local XAMPP values.
+define('DB_HOST', getenv('MYSQLHOST') ?: 'localhost');
+define('DB_USER', getenv('MYSQLUSER') ?: 'root');
+define('DB_PASS', getenv('MYSQLPASSWORD') ?: '');
+define('DB_NAME', getenv('MYSQLDATABASE') ?: 'prenatal');
+define('DB_PORT', getenv('MYSQLPORT') ?: 3306);
 
 class Database {
     private static $instance = null;
