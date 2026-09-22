@@ -20,6 +20,19 @@ if (!$appointmentId) {
 
 $errorMsg = '';
 
+// Casts an optional form value to the right type for the DB, or null if it
+// wasn't filled in. Using this everywhere (instead of `$val ?: null`) avoids
+// two bugs: (1) a legitimate 0 value getting silently turned into null by
+// PHP's `?:` operator, and (2) inconsistent handling across fields.
+function nullableNumber($value) {
+    $value = trim((string)($value ?? ''));
+    return ($value === '') ? null : $value;
+}
+function nullableText($value) {
+    $value = trim((string)($value ?? ''));
+    return ($value === '') ? null : $value;
+}
+
 try {
     $db = getDB();
 
@@ -226,7 +239,11 @@ try {
 
             // Lab/Vaccine/Postnatal forms don't collect gestational age directly.
             // Fall back to computing it from the patient's LMP so the record still
-            // carries a meaningful value instead of NULL.
+            // carries a meaningful value instead of an empty string. If the patient
+            // has no LMP on file either, $gestationalAge is left as '' and
+            // nullableNumber() below turns it into a proper NULL for the DB (the
+            // column is nullable — see config.php's ensureSchemaUpgrades()) rather
+            // than crashing on a NOT NULL constraint.
             if (empty($gestationalAge) && !empty($appointment['lmp'])) {
                 $gestationalAge = calculateGestationalAgeWeeks($appointment['lmp'], $appointment['appointment_date']);
             }
@@ -253,25 +270,25 @@ try {
                         $appointment['patient_id'],
                         $appointmentId,
                         $userId,
-                        $weight ?: null,
-                        $systolic ?: null,
-                        $diastolic ?: null,
-                        $temperature ?: null,
-                        $pulseRate ?: null,
-                        $respiratoryRate ?: null,
-                        $fetalHeartRate ?: null,
-                        $fundalHeight ?: null,
-                        $fetalPresentation ?: null,
+                        nullableNumber($weight),
+                        nullableNumber($systolic),
+                        nullableNumber($diastolic),
+                        nullableNumber($temperature),
+                        nullableNumber($pulseRate),
+                        nullableNumber($respiratoryRate),
+                        nullableNumber($fetalHeartRate),
+                        nullableNumber($fundalHeight),
+                        nullableText($fetalPresentation),
                         $edema,
                         $urineProtein,
                         $urineSugar,
-                        $gestationalAge ?: null,
+                        nullableNumber($gestationalAge),
                         $riskAssessment,
-                        $clinicalNotes ?: null,
-                        $nextVisitDate ?: null,
-                        $vitaminsPrescribed ?: null,
-                        $ironFolicGiven ?: null,
-                        $tetanusVaccineGiven ?: null
+                        nullableText($clinicalNotes),
+                        nullableText($nextVisitDate),
+                        nullableText($vitaminsPrescribed),
+                        nullableText($ironFolicGiven),
+                        nullableText($tetanusVaccineGiven)
                     ]);
 
                     // Update appointment status
