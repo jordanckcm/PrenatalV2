@@ -87,7 +87,7 @@ function notifyStaff($title, $message, $type = 'system') {
         $stmt = $db->prepare("SELECT id FROM users WHERE role IN ('healthcare_worker', 'admin')");
         $stmt->execute();
         $staffIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
-        
+
         $insert = $db->prepare("INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, ?)");
         foreach ($staffIds as $uid) {
             $insert->execute([$uid, $title, $message, $type]);
@@ -152,7 +152,13 @@ function hasUnusablePasswordHash($hash) {
  * Runs once per browser session, so existing installs keep working without re-importing database.sql.
  */
 function ensureSchemaUpgrades() {
-    $marker = APP_VERSION . '-schema-2';
+    // Bumped to schema-4: an earlier deployment already marked some sessions as
+    // "schema-3 done" before the prenatal_records.temperature column was added to
+    // this function, so those sessions were skipping the upgrade entirely and the
+    // column never got created. Changing the marker string forces every session
+    // to re-run this check at least once. (All the individual $add() calls below
+    // are safe to re-run — each one checks hasColumn() first.)
+    $marker = APP_VERSION . '-schema-4';
     if (($_SESSION['schema_ok'] ?? '') === $marker) return;
 
     try {
@@ -177,6 +183,7 @@ function ensureSchemaUpgrades() {
         $add('appointments', 'room', 'VARCHAR(100) DEFAULT NULL');
         $add('appointments', 'worker_notified', 'TINYINT(1) NOT NULL DEFAULT 0');
         $add('appointments', 'worker_confirmed_at', 'DATETIME DEFAULT NULL');
+        $add('prenatal_records', 'temperature', 'DECIMAL(4,1) DEFAULT NULL');
 
         $type = $db->query("SELECT COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'status'")->fetchColumn();
         if ($type && stripos($type, 'archived') === false) {
