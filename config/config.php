@@ -152,13 +152,13 @@ function hasUnusablePasswordHash($hash) {
  * Runs once per browser session, so existing installs keep working without re-importing database.sql.
  */
 function ensureSchemaUpgrades() {
-    // Bumped to schema-4: an earlier deployment already marked some sessions as
-    // "schema-3 done" before the prenatal_records.temperature column was added to
-    // this function, so those sessions were skipping the upgrade entirely and the
-    // column never got created. Changing the marker string forces every session
-    // to re-run this check at least once. (All the individual $add() calls below
-    // are safe to re-run — each one checks hasColumn() first.)
-    $marker = APP_VERSION . '-schema-4';
+    // Bumped to schema-5: prenatal_records was missing several of the columns the
+    // "Examine Patient" form saves (temperature, pulse_rate, and likely more further
+    // down the same INSERT statement). Rather than fix these one column at a time as
+    // each one throws, every column that INSERT uses is listed below. Each $add()
+    // call checks hasColumn() first, so it's safe to re-run even for columns that
+    // already exist. Bumping the marker string forces every session to re-check.
+    $marker = APP_VERSION . '-schema-5';
     if (($_SESSION['schema_ok'] ?? '') === $marker) return;
 
     try {
@@ -183,7 +183,25 @@ function ensureSchemaUpgrades() {
         $add('appointments', 'room', 'VARCHAR(100) DEFAULT NULL');
         $add('appointments', 'worker_notified', 'TINYINT(1) NOT NULL DEFAULT 0');
         $add('appointments', 'worker_confirmed_at', 'DATETIME DEFAULT NULL');
+        $add('prenatal_records', 'weight_kg', 'DECIMAL(5,2) DEFAULT NULL');
+        $add('prenatal_records', 'systolic_bp', 'SMALLINT DEFAULT NULL');
+        $add('prenatal_records', 'diastolic_bp', 'SMALLINT DEFAULT NULL');
         $add('prenatal_records', 'temperature', 'DECIMAL(4,1) DEFAULT NULL');
+        $add('prenatal_records', 'pulse_rate', 'SMALLINT DEFAULT NULL');
+        $add('prenatal_records', 'respiratory_rate', 'SMALLINT DEFAULT NULL');
+        $add('prenatal_records', 'fetal_heart_rate', 'SMALLINT DEFAULT NULL');
+        $add('prenatal_records', 'fundal_height_cm', 'DECIMAL(4,1) DEFAULT NULL');
+        $add('prenatal_records', 'fetal_presentation', 'VARCHAR(50) DEFAULT NULL');
+        $add('prenatal_records', 'edema', "VARCHAR(20) DEFAULT 'none'");
+        $add('prenatal_records', 'urine_protein', "VARCHAR(20) DEFAULT 'Negative'");
+        $add('prenatal_records', 'urine_sugar', "VARCHAR(20) DEFAULT 'Negative'");
+        $add('prenatal_records', 'gestational_age_weeks', 'SMALLINT DEFAULT NULL');
+        $add('prenatal_records', 'risk_assessment', "VARCHAR(20) DEFAULT 'low_risk'");
+        $add('prenatal_records', 'clinical_notes', 'TEXT DEFAULT NULL');
+        $add('prenatal_records', 'next_visit_date', 'DATE DEFAULT NULL');
+        $add('prenatal_records', 'vitamins_prescribed', 'VARCHAR(255) DEFAULT NULL');
+        $add('prenatal_records', 'iron_folic_given', 'VARCHAR(255) DEFAULT NULL');
+        $add('prenatal_records', 'tetanus_vaccine_given', 'VARCHAR(100) DEFAULT NULL');
 
         $type = $db->query("SELECT COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'status'")->fetchColumn();
         if ($type && stripos($type, 'archived') === false) {
