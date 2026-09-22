@@ -158,7 +158,7 @@ function ensureSchemaUpgrades() {
     // each one throws, every column that INSERT uses is listed below. Each $add()
     // call checks hasColumn() first, so it's safe to re-run even for columns that
     // already exist. Bumping the marker string forces every session to re-check.
-    $marker = APP_VERSION . '-schema-5';
+    $marker = APP_VERSION . '-schema-6';
     if (($_SESSION['schema_ok'] ?? '') === $marker) return;
 
     try {
