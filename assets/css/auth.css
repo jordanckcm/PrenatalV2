@@ -1,0 +1,439 @@
+/* ==========================================================================
+   MaternalCare — Auth Pages (login.php / register.php)
+   Organic Curved Wave Split Container Layout (Image 2 Reference Style)
+   ========================================================================== */
+
+body.au {
+    margin: 0;
+    background: var(--bg-body);
+    font-family: 'Figtree', system-ui, sans-serif;
+    min-height: 100vh;
+    color: var(--text-dark);
+}
+
+.au-shell {
+    display: grid;
+    grid-template-columns: 1fr 1.15fr;
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+}
+
+/* ---------- Curved organic wave illustration pane (Right side) ---------- */
+.au-info {
+    position: relative;
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, rgba(20, 184, 166, 0.12) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3.5rem 3rem;
+    overflow: hidden;
+}
+
+:root[data-theme="dark"] .au-info {
+    background: linear-gradient(135deg, #18181B 0%, #09090B 100%);
+}
+
+/* Organic SVG curve separator */
+.au-wave-divider {
+    position: absolute;
+    top: 0;
+    left: -2px;
+    height: 100%;
+    width: 90px;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.au-wave-divider path {
+    fill: var(--surface);
+    transition: fill 0.3s ease;
+}
+
+.au-info-inner {
+    max-width: 480px;
+    margin: 0 auto;
+    width: 100%;
+    z-index: 3;
+    text-align: center;
+}
+
+.au-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.95rem;
+    margin-bottom: 2rem;
+    background: var(--surface);
+    padding: 0.6rem 1.25rem;
+    border-radius: 999px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+}
+
+.au-brand-mark {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(249, 115, 22, 0.15);
+    border: 1px solid rgba(249, 115, 22, 0.3);
+    color: #F97316;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.au-brand-name {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 800;
+    font-size: 1.25rem;
+    color: var(--text-dark);
+}
+
+.au-brand-sub {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+.au-headline {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 1.75rem;
+    font-weight: 800;
+    line-height: 1.3;
+    margin-bottom: 1.5rem;
+    color: var(--text-dark);
+}
+
+.au-illustration-box {
+    margin: 1.5rem 0;
+    width: 100%;
+    max-width: 420px;
+    display: inline-block;
+    filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.08));
+}
+
+.au-info-foot {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-top: 1.5rem;
+}
+
+/* ---------- Form pane (Left side) ---------- */
+.au-main {
+    display: flex;
+    flex-direction: column;
+    padding: 3rem 4rem;
+    background: var(--surface);
+    justify-content: center;
+    position: relative;
+    z-index: 4;
+}
+
+.au-main.is-wide {
+    padding: 3rem 4.5rem;
+}
+
+.au-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2.25rem;
+}
+
+.au-home {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.au-home:hover {
+    color: var(--primary);
+}
+
+.au-theme {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-body);
+    border: 1.5px solid var(--border-color);
+    color: var(--text-dark);
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: var(--transition);
+}
+
+.au-theme:hover {
+    color: var(--primary);
+    border-color: var(--primary);
+    transform: scale(1.05);
+}
+
+.au-form-wrap {
+    max-width: 420px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.au-form-wrap.is-wide {
+    max-width: 580px;
+}
+
+.au-tabs {
+    display: flex;
+    gap: 2rem;
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 2rem;
+}
+
+.au-tab {
+    padding-bottom: 0.85rem;
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--text-muted);
+    border-bottom: 3px solid transparent;
+    text-decoration: none;
+    transition: var(--transition);
+    margin-bottom: -2px;
+}
+
+.au-tab.is-active {
+    color: var(--primary);
+    border-color: var(--primary);
+}
+
+.au-tab:hover {
+    color: var(--text-dark);
+    text-decoration: none;
+}
+
+.au-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 0.4rem;
+    color: var(--text-dark);
+}
+
+.au-sub {
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+    font-size: 0.95rem;
+}
+
+.au-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.95rem 1.25rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.88rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+.au-alert.error {
+    background: var(--danger-light);
+    color: var(--danger);
+    border: 1.5px solid rgba(239, 68, 68, 0.3);
+}
+
+.au-alert.success {
+    background: var(--success-light);
+    color: var(--success);
+    border: 1.5px solid rgba(16, 185, 129, 0.3);
+}
+
+.au-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+}
+
+.au-field {
+    margin-bottom: 1.35rem;
+}
+
+.au-grid .au-field {
+    margin-bottom: 0;
+}
+
+.au-label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--text-dark);
+}
+
+.au-req {
+    color: var(--danger);
+    font-weight: 800;
+}
+
+.au-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.au-ico {
+    position: absolute;
+    left: 1.1rem;
+    color: var(--primary);
+    font-size: 1.05rem;
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* HIGH-CONTRAST VISIBLE INPUT BOXES */
+.au-input {
+    width: 100%;
+    padding: 0.85rem 1rem 0.85rem 2.85rem;
+    border: 1.5px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-body);
+    color: var(--text-dark);
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    box-sizing: border-box;
+    transition: var(--transition);
+}
+
+:root[data-theme="light"] .au-input {
+    border: 1.5px solid #CBD5E1;
+    background: #FFFFFF;
+    color: #020617;
+}
+
+:root[data-theme="dark"] .au-input {
+    border: 1.5px solid #3F3F46;
+    background: #18181B;
+    color: #FAFAFA;
+}
+
+.au-input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.85;
+}
+
+.au-input.has-eye {
+    padding-right: 3rem;
+}
+
+.au-input:focus {
+    outline: none;
+    border-color: var(--primary) !important;
+    background: var(--surface);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.25);
+    color: var(--text-dark);
+}
+
+.au-eye {
+    position: absolute;
+    right: 0.9rem;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.4rem;
+    font-size: 1.1rem;
+    z-index: 2;
+}
+
+.au-eye:hover {
+    color: var(--primary);
+}
+
+.au-hint {
+    font-size: 0.78rem;
+    margin: 0.4rem 0 0;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.au-hint.is-good { color: var(--success); }
+.au-hint.is-bad { color: var(--danger); }
+.au-input.is-bad { border-color: var(--danger) !important; }
+
+/* HIGH-CONTRAST SOLID PRIMARY SUBMIT BUTTON */
+.au-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    background: #F97316 !important;
+    color: #FFFFFF !important;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 0.95rem 1.5rem;
+    font-weight: 800;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 6px 20px rgba(249, 115, 22, 0.4);
+    margin-top: 0.75rem;
+}
+
+.au-btn * {
+    color: #FFFFFF !important;
+}
+
+.au-btn:hover {
+    background: #EA580C !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(249, 115, 22, 0.5);
+}
+
+.au-btn:disabled {
+    opacity: 0.75;
+    cursor: progress;
+}
+
+.au-alt {
+    text-align: center;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    margin-top: 1.75rem;
+}
+
+.au-alt a {
+    color: var(--primary);
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.au-alt a:hover {
+    text-decoration: underline;
+}
+
+.au-foot {
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 2rem;
+}
+
+@media (max-width: 960px) {
+    .au-shell {
+        grid-template-columns: 1fr;
+    }
+    .au-info {
+        display: none;
+    }
+    .au-main, .au-main.is-wide {
+        padding: 2rem 1.5rem;
+    }
+    .au-grid {
+        grid-template-columns: 1fr;
+    }
+}
