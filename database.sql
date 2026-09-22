@@ -1,19 +1,14 @@
 -- ============================================================================
--- MaternalCare — Web-Based Prenatal Health Center Booking Appointment
+-- MaternalCare — Railway MySQL Database Schema
+-- Web-Based Prenatal Health Center Booking Appointment
 -- and Record Management System
--- Complete Database Schema (matches every file in the project)
 -- ============================================================================
 
 SET FOREIGN_KEY_CHECKS = 0;
 
-CREATE DATABASE IF NOT EXISTS `prenatal` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE `prenatal`;
-
 -- ----------------------------------------------------------------------------
 -- 1. Users Table
 -- ----------------------------------------------------------------------------
-SET FOREIGN_KEY_CHECKS = 0;
-
 CREATE TABLE IF NOT EXISTS `users` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `username` VARCHAR(50) NOT NULL UNIQUE,
@@ -67,7 +62,7 @@ CREATE TABLE IF NOT EXISTS `services` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ----------------------------------------------------------------------------
--- 4. Schedules Table (General Clinic Weekly Operating Hours)
+-- 4. Schedules Table
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `schedules` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
@@ -81,8 +76,7 @@ CREATE TABLE IF NOT EXISTS `schedules` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ----------------------------------------------------------------------------
--- 4b. Slot Overrides (per-date capacity/time/block edits — schema matches
---      includes/slot_helper.php and api/manage_slots.php exactly)
+-- 4b. Slot Overrides
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `slot_overrides` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
@@ -97,7 +91,7 @@ CREATE TABLE IF NOT EXISTS `slot_overrides` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ----------------------------------------------------------------------------
--- 4c. Staff Duty Schedules (per-staff weekly shift, used by staff assignment)
+-- 4c. Staff Duty Schedules
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `staff_duty_schedules` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
@@ -196,8 +190,7 @@ CREATE TABLE IF NOT EXISTS `audit_logs` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ----------------------------------------------------------------------------
--- 9. System Settings Table (key/value — includes updated_at, required by
---    admin/system_settings.php's ON DUPLICATE KEY UPDATE)
+-- 9. System Settings Table
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `system_settings` (
     `setting_key` VARCHAR(50) PRIMARY KEY,
@@ -205,7 +198,9 @@ CREATE TABLE IF NOT EXISTS `system_settings` (
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Default / seed values for every setting_key referenced across the codebase
+-- ----------------------------------------------------------------------------
+-- Default System Settings
+-- ----------------------------------------------------------------------------
 INSERT INTO `system_settings` (`setting_key`, `setting_value`) VALUES
 ('center_name', 'MaternalCare Prenatal Health & Wellness Center'),
 ('center_address', '123 Healthcare Way, Wellness District, Metro City'),
@@ -237,7 +232,7 @@ INSERT INTO `services` (`id`, `service_name`, `description`, `duration_minutes`,
 ON DUPLICATE KEY UPDATE `service_name` = VALUES(`service_name`);
 
 -- ----------------------------------------------------------------------------
--- Default Clinic Schedule (Monday–Saturday)
+-- Default Clinic Schedule
 -- ----------------------------------------------------------------------------
 INSERT INTO `schedules` (`day_of_week`, `start_time`, `end_time`, `max_patients_per_slot`, `is_active`)
 SELECT * FROM (
@@ -251,8 +246,8 @@ SELECT * FROM (
 WHERE NOT EXISTS (SELECT 1 FROM `schedules`);
 
 -- ----------------------------------------------------------------------------
--- Default Users — all seed accounts use password: password123
--- Hash = password_hash('password123', PASSWORD_BCRYPT)
+-- Default Users
+-- All seed accounts use password: password123
 -- ----------------------------------------------------------------------------
 INSERT INTO `users` (`id`, `username`, `email`, `password`, `role`, `full_name`, `phone`, `status`) VALUES
 (1, 'admin', 'admin@prenatalcare.org', '$2y$10$hnyoY17wd4E9Ktl.jF1is.5h79bzxCEQWzYlH.mWVSWlHncEEog0m', 'admin', 'Administrator System Admin', '+63 900 000 0001', 'active'),
@@ -271,7 +266,7 @@ INSERT INTO `patients` (`id`, `user_id`, `patient_code`, `dob`, `address`, `bloo
 ON DUPLICATE KEY UPDATE `patient_code` = VALUES(`patient_code`);
 
 -- ----------------------------------------------------------------------------
--- Default Staff Duty Schedules (Mon–Sat on duty, Sunday off) for both seeded staff
+-- Default Staff Duty Schedules
 -- ----------------------------------------------------------------------------
 INSERT INTO `staff_duty_schedules` (`staff_id`, `day_of_week`, `start_time`, `end_time`, `is_duty`) VALUES
 (2, 'Monday', '08:00:00', '16:00:00', 1),
@@ -300,7 +295,7 @@ INSERT INTO `appointments` (`id`, `appointment_code`, `patient_id`, `service_id`
 ON DUPLICATE KEY UPDATE `appointment_code` = VALUES(`appointment_code`);
 
 -- ----------------------------------------------------------------------------
--- Sample Prenatal Checkup Record for the Completed Appointment
+-- Sample Prenatal Record
 -- ----------------------------------------------------------------------------
 INSERT INTO `prenatal_records` (`id`, `patient_id`, `appointment_id`, `healthcare_worker_id`, `visit_date`, `gestational_age_weeks`, `weight_kg`, `systolic_bp`, `diastolic_bp`, `fundal_height_cm`, `fetal_heart_rate`, `fetal_presentation`, `edema`, `urine_protein`, `urine_sugar`, `hemoglobin_level`, `vitamins_prescribed`, `iron_folic_given`, `tetanus_vaccine_given`, `risk_assessment`, `clinical_notes`, `next_visit_date`) VALUES
 (1, 1, 3, 2, CURDATE() - INTERVAL 2 DAY, 26, 62.50, 118, 76, 25.0, 142, 'Cephalic', 'none', 'Negative', 'Negative', 12.4, 'Prenatal Multivitamins & Calcium 500mg daily', 1, 'TT2', 'low_risk', 'Mother and fetus progressing normally. Good fetal movement reported.', CURDATE() + INTERVAL 2 WEEK)
