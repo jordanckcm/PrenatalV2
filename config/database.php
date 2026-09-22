@@ -8,16 +8,19 @@
 // DATABASE CREDENTIALS
 // ============================================
 // On Railway, DATABASE_URL looks like: mysql://user:password@host:port/database
-$databaseUrl = getenv('DATABASE_URL');
-
-error_log('DEBUG DATABASE_URL is: ' . var_export($databaseUrl, true));
+$databaseUrl = trim((string) getenv('DATABASE_URL'));
 
 if ($databaseUrl) {
     $dbParts = parse_url($databaseUrl);
+
+    if ($dbParts === false || !isset($dbParts['host'])) {
+        die("Database Connection Error: Could not parse DATABASE_URL.");
+    }
+
     define('DB_HOST', $dbParts['host']);
-    define('DB_USER', $dbParts['user']);
-    define('DB_PASS', $dbParts['pass']);
-    define('DB_NAME', ltrim($dbParts['path'], '/'));
+    define('DB_USER', $dbParts['user'] ?? 'root');
+    define('DB_PASS', $dbParts['pass'] ?? '');
+    define('DB_NAME', ltrim($dbParts['path'] ?? '', '/'));
     define('DB_PORT', $dbParts['port'] ?? 3306);
 } else {
     // Local XAMPP fallback
