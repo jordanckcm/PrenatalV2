@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 
+echo "===== ENV DUMP START ====="
+env | sort
+echo "===== ENV DUMP END ====="
+
 # Force only mpm_prefork to be active at runtime (not just build time)
 rm -f /etc/apache2/mods-enabled/mpm_event.load /etc/apache2/mods-enabled/mpm_event.conf
 rm -f /etc/apache2/mods-enabled/mpm_worker.load /etc/apache2/mods-enabled/mpm_worker.conf
