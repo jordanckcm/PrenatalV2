@@ -148,17 +148,19 @@ function hasUnusablePasswordHash($hash) {
 }
 
 /**
- * Brings an older database up to the schema the code expects (adds missing columns/indexes).
+ * Brings an older database up to the schema the code expects (adds missing columns/indexes,
+ * and relaxes columns that older installs may have created as NOT NULL).
  * Runs once per browser session, so existing installs keep working without re-importing database.sql.
  */
 function ensureSchemaUpgrades() {
-    // Bumped to schema-5: prenatal_records was missing several of the columns the
-    // "Examine Patient" form saves (temperature, pulse_rate, and likely more further
-    // down the same INSERT statement). Rather than fix these one column at a time as
-    // each one throws, every column that INSERT uses is listed below. Each $add()
-    // call checks hasColumn() first, so it's safe to re-run even for columns that
-    // already exist. Bumping the marker string forces every session to re-check.
-    $marker = APP_VERSION . '-schema-6';
+    // Bumped to schema-7: examine-patient.php submits many prenatal_records columns
+    // that are genuinely optional per service type (a Lab visit doesn't collect
+    // fetal_heart_rate, a Vaccine visit doesn't collect weight, etc). On installs
+    // where database.sql created these as NOT NULL with no default, saving any
+    // examination that doesn't populate one of them throws a 1048 "cannot be null"
+    // integrity-constraint error. Every column examine-patient.php can leave empty
+    // is now force-relaxed to nullable below, not just added if missing.
+    $marker = APP_VERSION . '-schema-7';
     if (($_SESSION['schema_ok'] ?? '') === $marker) return;
 
     try {
@@ -173,6 +175,19 @@ function ensureSchemaUpgrades() {
         $add = function ($table, $column, $definition) use ($db, $hasColumn) {
             if (!$hasColumn($table, $column)) {
                 $db->exec("ALTER TABLE `$table` ADD COLUMN `$column` $definition");
+            }
+        };
+        // Forces an existing column to allow NULL, keeping its current type/size but
+        // dropping any NOT NULL constraint from an older schema. Safe to re-run.
+        $makeNullable = function ($table, $column, $nullableDefinition) use ($db, $hasColumn) {
+            if (!$hasColumn($table, $column)) return; // $add() above will have created it nullable already
+            $isNullable = $db->prepare("
+                SELECT IS_NULLABLE FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?
+            ");
+            $isNullable->execute([$table, $column]);
+            if ($isNullable->fetchColumn() === 'NO') {
+                $db->exec("ALTER TABLE `$table` MODIFY COLUMN `$column` $nullableDefinition");
             }
         };
 
@@ -202,6 +217,29 @@ function ensureSchemaUpgrades() {
         $add('prenatal_records', 'vitamins_prescribed', 'VARCHAR(255) DEFAULT NULL');
         $add('prenatal_records', 'iron_folic_given', 'VARCHAR(255) DEFAULT NULL');
         $add('prenatal_records', 'tetanus_vaccine_given', 'VARCHAR(100) DEFAULT NULL');
+
+        // Every prenatal_records column that examine-patient.php may submit as empty
+        // depending on service type. Column type/size below matches what $add() uses
+        // above, so re-running this never shrinks or changes an existing column's type.
+        $makeNullable('prenatal_records', 'weight_kg', 'DECIMAL(5,2) DEFAULT NULL');
+        $makeNullable('prenatal_records', 'systolic_bp', 'SMALLINT DEFAULT NULL');
+        $makeNullable('prenatal_records', 'diastolic_bp', 'SMALLINT DEFAULT NULL');
+        $makeNullable('prenatal_records', 'temperature', 'DECIMAL(4,1) DEFAULT NULL');
+        $makeNullable('prenatal_records', 'pulse_rate', 'SMALLINT DEFAULT NULL');
+        $makeNullable('prenatal_records', 'respiratory_rate', 'SMALLINT DEFAULT NULL');
+        $makeNullable('prenatal_records', 'fetal_heart_rate', 'SMALLINT DEFAULT NULL');
+        $makeNullable('prenatal_records', 'fundal_height_cm', 'DECIMAL(4,1) DEFAULT NULL');
+        $makeNullable('prenatal_records', 'fetal_presentation', 'VARCHAR(50) DEFAULT NULL');
+        $makeNullable('prenatal_records', 'gestational_age_weeks', 'SMALLINT DEFAULT NULL');
+        $makeNullable('prenatal_records', 'clinical_notes', 'TEXT DEFAULT NULL');
+        $makeNullable('prenatal_records', 'next_visit_date', 'DATE DEFAULT NULL');
+        $makeNullable('prenatal_records', 'vitamins_prescribed', 'VARCHAR(255) DEFAULT NULL');
+        $makeNullable('prenatal_records', 'iron_folic_given', 'VARCHAR(255) DEFAULT NULL');
+        $makeNullable('prenatal_records', 'tetanus_vaccine_given', 'VARCHAR(100) DEFAULT NULL');
+        // edema / urine_protein / urine_sugar / risk_assessment are intentionally left
+        // alone here: examine-patient.php always supplies a value for these (it falls
+        // back to 'none' / 'Negative' / 'low_risk' rather than sending empty), so they
+        // don't need to be nullable.
 
         $type = $db->query("SELECT COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'status'")->fetchColumn();
         if ($type && stripos($type, 'archived') === false) {
