@@ -115,7 +115,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ensurePatientProfile($db, $newUserId);
                     $db->commit();
 
-                    createNotification($newUserId, "Welcome to MaternalCare", "Your account is ready. You can now book a prenatal appointment.", "system");
+                    createNotification($newUserId, "Welcome to MaternalCare", "Your account is ready. You can now book a prenatal appointment.", "system", "patient/book_appointment.php");
+                    notifyAdmins("New Patient Registered", "{$fullName} (@{$regUsername}) just created a patient account.", "account", "admin/users.php");
                     logAudit('PATIENT_REGISTER', "New patient '{$regUsername}' registered");
 
                     session_regenerate_id(true);

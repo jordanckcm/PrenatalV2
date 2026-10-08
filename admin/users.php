@@ -50,6 +50,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'add_u
                     $ins = $db->prepare("INSERT INTO users (username, email, password, role, full_name, phone, status, created_at) VALUES (?, ?, ?, ?, ?, ?, 'active', NOW())");
                     $ins->execute([$username, $email, password_hash($password, PASSWORD_BCRYPT), $role, $fullName, $phone ?: null]);
 
+                    $newStaffId = (int)$db->lastInsertId();
+                    createNotification($newStaffId, 'Welcome to MaternalCare', 'Your healthcare worker account is ready. New bookings and assignments will appear here.', 'account', 'worker/dashboard.php');
                     logAudit('USER_CREATED', "Admin created healthcare worker '$username'");
                     $successMsg = "Healthcare Worker added successfully!";
                 }

@@ -26,6 +26,10 @@ if ($currentRole === 'admin') $dashboardUrl = BASE_URL . 'admin/dashboard.php';
 elseif ($currentRole === 'healthcare_worker') $dashboardUrl = BASE_URL . 'worker/dashboard.php';
 elseif ($currentRole === 'patient') $dashboardUrl = BASE_URL . 'patient/dashboard.php';
 
+// Unread notifications (bell + nav badge)
+$unreadNotifCount = getUnreadNotificationCount($currentUserId);
+$notificationsUrl = getNotificationsUrl($currentRole);
+
 // Nav items base sa role
 $navItems = [];
 if ($currentRole === 'admin') {
@@ -34,6 +38,7 @@ if ($currentRole === 'admin') {
         ['label' => 'Admin Dashboard', 'icon' => 'fa-gauge', 'url' => 'admin/dashboard.php', 'key' => 'dashboard'],
         ['label' => 'Booking Requests', 'icon' => 'fa-calendar-check', 'url' => 'admin/appointments.php', 'key' => 'appointments'],
         ['label' => 'Prenatal Records', 'icon' => 'fa-notes-medical', 'url' => 'admin/prenatal_records.php', 'key' => 'prenatal_records'],
+        ['label' => 'Notifications', 'icon' => 'fa-bell', 'url' => 'admin/notifications.php', 'key' => 'notifications', 'notif' => true],
 
         ['section' => 'User Management'],
         ['label' => 'Users & Staff', 'icon' => 'fa-users', 'url' => 'admin/users.php', 'key' => 'users'],
@@ -58,6 +63,7 @@ if ($currentRole === 'admin') {
         ['label' => 'Prenatal Records', 'icon' => 'fa-notes-medical', 'url' => 'worker/prenatal_records.php', 'key' => 'records'],
         ['label' => 'Follow-Up Visits', 'icon' => 'fa-clock-rotate-left', 'url' => 'worker/followups.php', 'key' => 'followups'],
         ['label' => 'Calendar', 'icon' => 'fa-calendar-days', 'url' => 'worker/calendar.php', 'key' => 'calendar'],
+        ['label' => 'Notifications', 'icon' => 'fa-bell', 'url' => 'worker/notifications.php', 'key' => 'notifications', 'notif' => true],
         ['label' => 'Schedules & Slots', 'icon' => 'fa-calendar-week', 'url' => 'worker/schedules.php', 'key' => 'schedules'],
         ['label' => 'Account Settings', 'icon' => 'fa-gear', 'url' => 'worker/settings.php', 'key' => 'settings'],
     ];
@@ -70,7 +76,7 @@ if ($currentRole === 'admin') {
         ['section' => 'Patient Care'],
         ['label' => 'My Appointments', 'icon' => 'fa-calendar-check', 'url' => 'patient/my_appointments.php', 'key' => 'appointments'],
         ['label' => 'Prenatal Records', 'icon' => 'fa-notes-medical', 'url' => 'patient/records.php', 'key' => 'records'],
-        ['label' => 'Notifications', 'icon' => 'fa-bell', 'url' => 'patient/notifications.php', 'key' => 'notifications'],
+        ['label' => 'Notifications', 'icon' => 'fa-bell', 'url' => 'patient/notifications.php', 'key' => 'notifications', 'notif' => true],
 
         ['section' => 'Account'],
         ['label' => 'Account Settings', 'icon' => 'fa-user-gear', 'url' => 'patient/settings.php', 'key' => 'settings'],
@@ -154,6 +160,9 @@ if ($currentRole === 'admin') {
                    class="nav-link <?php echo ($activePage === $item['key']) ? 'active' : ''; ?>">
                     <i class="fa-solid <?php echo $item['icon']; ?>"></i>
                     <span><?php echo $item['label']; ?></span>
+                    <?php if (!empty($item['notif'])): ?>
+                        <span class="notif-nav-badge" style="<?php echo $unreadNotifCount > 0 ? '' : 'display:none;'; ?>background:var(--primary,#F97316);color:#fff;font-size:.65rem;font-weight:800;border-radius:999px;padding:.15rem .45rem;min-width:1.3rem;text-align:center;margin-left:auto;line-height:1.4;"><?php echo $unreadNotifCount; ?></span>
+                    <?php endif; ?>
                     <?php if (!empty($item['badge'])): ?>
                         <span class="nav-badge"><?php echo $item['badge']; ?></span>
                     <?php endif; ?>
@@ -208,6 +217,22 @@ if ($currentRole === 'admin') {
                 <i class="fa-solid <?php echo $role['icon']; ?>"></i>
                 <?php echo $role['label']; ?>
             </span>
+
+            <!-- NOTIFICATION BELL -->
+            <div class="notif-bell-wrap" style="position:relative;">
+                <button type="button" id="notifBellBtn" class="btn btn-outline btn-icon" aria-label="Notifications" style="position:relative;">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="notif-nav-badge" id="notifBellBadge" style="<?php echo $unreadNotifCount > 0 ? '' : 'display:none;'; ?>position:absolute;top:-6px;right:-6px;background:var(--primary,#F97316);color:#fff;font-size:.62rem;font-weight:800;border-radius:999px;padding:.1rem .38rem;min-width:1.1rem;text-align:center;line-height:1.35;"><?php echo $unreadNotifCount; ?></span>
+                </button>
+                <div id="notifDropdown" style="display:none;position:absolute;right:0;top:calc(100% + 8px);width:340px;max-width:92vw;background:var(--surface);border:1px solid var(--border-color);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.18);z-index:1000;overflow:hidden;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem 1rem;border-bottom:1px solid var(--border-color);">
+                        <strong style="font-size:.9rem;">Notifications</strong>
+                        <button type="button" id="notifMarkAll" style="background:none;border:none;color:var(--primary);font-weight:700;font-size:.75rem;cursor:pointer;">Mark all read</button>
+                    </div>
+                    <div id="notifList" style="max-height:340px;overflow-y:auto;"></div>
+                    <a href="<?php echo $notificationsUrl; ?>" style="display:block;text-align:center;padding:.7rem;font-size:.82rem;font-weight:700;color:var(--primary);border-top:1px solid var(--border-color);text-decoration:none;">View all notifications</a>
+                </div>
+            </div>
 
             <!-- THEME TOGGLE -->
             <button type="button" class="btn btn-outline btn-icon theme-toggle-btn" aria-label="Switch Theme">

@@ -196,5 +196,51 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 </script>
 
+<script>
+/* Notification bell: polls the unread count + latest items every 30s */
+(function () {
+    var btn = document.getElementById('notifBellBtn');
+    if (!btn) return;
+    var dd = document.getElementById('notifDropdown'), list = document.getElementById('notifList');
+    var API = '<?php echo BASE_URL; ?>api/notifications.php', CSRF = '<?php echo getCsrfToken(); ?>';
+    function esc(t) { var d = document.createElement('div'); d.textContent = t == null ? '' : t; return d.innerHTML; }
+    function setBadges(n) {
+        document.querySelectorAll('.notif-nav-badge').forEach(function (b) {
+            b.textContent = n > 99 ? '99+' : n; b.style.display = n > 0 ? '' : 'none';
+        });
+    }
+    function render(items) {
+        if (!items.length) { list.innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--text-muted);font-size:.85rem;">No notifications yet.</div>'; return; }
+        list.innerHTML = items.map(function (n) {
+            var tag = n.link ? 'a' : 'div';
+            return '<' + tag + (n.link ? ' href="' + esc(n.link) + '"' : '') + ' data-id="' + n.id + '" class="notif-item" style="display:block;padding:.7rem 1rem;border-bottom:1px solid var(--border-color);text-decoration:none;color:inherit;background:' + (n.is_read ? 'transparent' : 'rgba(249,115,22,.06)') + ';">' +
+                '<div style="font-weight:' + (n.is_read ? '600' : '800') + ';font-size:.84rem;">' + esc(n.title) + '</div>' +
+                '<div style="font-size:.78rem;color:var(--text-muted);margin-top:.15rem;">' + esc(n.message) + '</div>' +
+                '<div style="font-size:.7rem;color:var(--text-muted);margin-top:.25rem;">' + esc(n.time) + '</div></' + tag + '>';
+        }).join('');
+    }
+    function refresh() {
+        fetch(API + '?action=summary', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (d) {
+            if (d && d.success) { setBadges(d.unread); render(d.items); }
+        }).catch(function () {});
+    }
+    function post(fields) {
+        var fd = new FormData(); fd.append('csrf_token', CSRF);
+        Object.keys(fields).forEach(function (k) { fd.append(k, fields[k]); });
+        return fetch(API, { method: 'POST', body: fd, credentials: 'same-origin' }).then(function (r) { return r.json(); });
+    }
+    btn.addEventListener('click', function (e) { e.stopPropagation(); dd.style.display = dd.style.display === 'none' ? 'block' : 'none'; if (dd.style.display === 'block') refresh(); });
+    document.addEventListener('click', function (e) { if (!dd.contains(e.target)) dd.style.display = 'none'; });
+    list.addEventListener('click', function (e) {
+        var it = e.target.closest('.notif-item'); if (!it) return;
+        post({ action: 'mark_read', id: it.dataset.id }); // navigation (if any) continues normally
+    });
+    document.getElementById('notifMarkAll').addEventListener('click', function () {
+        post({ action: 'mark_all' }).then(function () { refresh(); });
+    });
+    refresh();
+    setInterval(refresh, 30000);
+})();
+</script>
 </body>
 </html>

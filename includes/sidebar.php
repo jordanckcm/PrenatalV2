@@ -188,6 +188,12 @@ $systemLogoUrl = getSystemLogoUrl();
                 </a>
             </li>
             <li class="sidebar-item">
+                <a href="<?php echo BASE_URL; ?>admin/doctors.php" class="sidebar-link <?php echo $activePage === 'doctors' ? 'active' : ''; ?>">
+                    <i class="fa-solid fa-user-doctor"></i>
+                    <span>Doctors</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
                 <a href="<?php echo BASE_URL; ?>admin/archived_users.php" class="sidebar-link <?php echo $activePage === 'archived_users' ? 'active' : ''; ?>">
                     <i class="fa-solid fa-box-archive"></i>
                     <span>Archived Accounts</span>

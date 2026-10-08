@@ -70,31 +70,71 @@ function logAudit($action, $details = '') {
     }
 }
 
-// Notification Helper
-function createNotification($user_id, $title, $message, $type = 'system') {
+// ---------------------------------------------------------------------------
+// Notification helpers (shared by admin, healthcare worker and patient roles)
+// ---------------------------------------------------------------------------
+// $link is an optional app-relative URL (e.g. 'admin/appointments.php'); clicking the
+// notification opens it. $type is a free label: appointment, cancellation, reminder,
+// followup, record, account, system.
+function createNotification($user_id, $title, $message, $type = 'system', $link = null) {
     try {
         $db = getDB();
-        $stmt = $db->prepare("INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$user_id, $title, $message, $type]);
+        $stmt = $db->prepare("INSERT INTO notifications (user_id, title, message, type, link) VALUES (?, ?, ?, ?, ?)");
+        $stmt->execute([$user_id, $title, $message, $type, $link]);
+    } catch (Exception $e) {
+        // Fail silently so a notification problem never breaks the main action
+    }
+}
+
+// Sends one notification to every active user holding $role ('admin' | 'healthcare_worker' | 'patient').
+// $exceptUserId skips the person who triggered the event (no need to notify yourself).
+function notifyRole($role, $title, $message, $type = 'system', $link = null, $exceptUserId = null) {
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("SELECT id FROM users WHERE role = ? AND status = 'active'");
+        $stmt->execute([$role]);
+        $insert = $db->prepare("INSERT INTO notifications (user_id, title, message, type, link) VALUES (?, ?, ?, ?, ?)");
+        foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) as $uid) {
+            if ($exceptUserId !== null && (int)$uid === (int)$exceptUserId) continue;
+            $insert->execute([$uid, $title, $message, $type, $link]);
+        }
     } catch (Exception $e) {
         // Fail silently
     }
 }
 
-function notifyStaff($title, $message, $type = 'system') {
-    try {
-        $db = getDB();
-        $stmt = $db->prepare("SELECT id FROM users WHERE role IN ('healthcare_worker', 'admin')");
-        $stmt->execute();
-        $staffIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
+function notifyAdmins($title, $message, $type = 'system', $link = null, $exceptUserId = null) {
+    notifyRole('admin', $title, $message, $type, $link, $exceptUserId);
+}
 
-        $insert = $db->prepare("INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, ?)");
-        foreach ($staffIds as $uid) {
-            $insert->execute([$uid, $title, $message, $type]);
-        }
+function notifyWorkers($title, $message, $type = 'system', $link = null, $exceptUserId = null) {
+    notifyRole('healthcare_worker', $title, $message, $type, $link, $exceptUserId);
+}
+
+// Admins + healthcare workers (kept for backward compatibility)
+function notifyStaff($title, $message, $type = 'system', $link = null, $exceptUserId = null) {
+    notifyAdmins($title, $message, $type, $link, $exceptUserId);
+    notifyWorkers($title, $message, $type, $link, $exceptUserId);
+}
+
+function getUnreadNotificationCount($userId = null) {
+    $userId = $userId ?? getCurrentUserId();
+    if (!$userId) return 0;
+    try {
+        $stmt = getDB()->prepare("SELECT COUNT(*) FROM notifications WHERE user_id = ? AND is_read = 0");
+        $stmt->execute([$userId]);
+        return (int)$stmt->fetchColumn();
     } catch (Exception $e) {
-        // Fail silently
+        return 0;
     }
+}
+
+// URL of the notifications page for the current role
+function getNotificationsUrl($role = null) {
+    $role = $role ?? getCurrentUserRole();
+    if ($role === 'admin') return BASE_URL . 'admin/notifications.php';
+    if ($role === 'healthcare_worker') return BASE_URL . 'worker/notifications.php';
+    return BASE_URL . 'patient/notifications.php';
 }
 
 // Format Date nicely
@@ -160,7 +200,7 @@ function ensureSchemaUpgrades() {
     // examination that doesn't populate one of them throws a 1048 "cannot be null"
     // integrity-constraint error. Every column examine-patient.php can leave empty
     // is now force-relaxed to nullable below, not just added if missing.
-    $marker = APP_VERSION . '-schema-7';
+    $marker = APP_VERSION . '-schema-8';
     if (($_SESSION['schema_ok'] ?? '') === $marker) return;
 
     try {
@@ -198,6 +238,9 @@ function ensureSchemaUpgrades() {
         $add('appointments', 'room', 'VARCHAR(100) DEFAULT NULL');
         $add('appointments', 'worker_notified', 'TINYINT(1) NOT NULL DEFAULT 0');
         $add('appointments', 'worker_confirmed_at', 'DATETIME DEFAULT NULL');
+        $add('appointments', 'cancel_reason', 'TEXT DEFAULT NULL');
+        $add('appointments', 'cancelled_at', 'DATETIME DEFAULT NULL');
+        $add('appointments', 'cancelled_by', 'INT DEFAULT NULL');
         $add('prenatal_records', 'weight_kg', 'DECIMAL(5,2) DEFAULT NULL');
         $add('prenatal_records', 'systolic_bp', 'SMALLINT DEFAULT NULL');
         $add('prenatal_records', 'diastolic_bp', 'SMALLINT DEFAULT NULL');
@@ -240,6 +283,20 @@ function ensureSchemaUpgrades() {
         // alone here: examine-patient.php always supplies a value for these (it falls
         // back to 'none' / 'Negative' / 'low_risk' rather than sending empty), so they
         // don't need to be nullable.
+
+        // Notifications: the original ENUM('appointment','reminder','followup','system') rejected
+        // types the code already used (e.g. 'cancellation'). Widen to VARCHAR and add a click-through link.
+        if ($db->query("SHOW TABLES LIKE 'notifications'")->rowCount() > 0) {
+            $add('notifications', 'link', 'VARCHAR(255) DEFAULT NULL');
+            $nType = $db->query("SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'notifications' AND COLUMN_NAME = 'type'")->fetchColumn();
+            if ($nType && strtolower($nType) === 'enum') {
+                $db->exec("ALTER TABLE notifications MODIFY COLUMN `type` VARCHAR(30) NOT NULL DEFAULT 'system'");
+            }
+            $nIdx = $db->query("SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'notifications' AND INDEX_NAME = 'idx_notif_user_read'")->fetchColumn();
+            if ((int)$nIdx === 0) {
+                $db->exec("ALTER TABLE notifications ADD INDEX idx_notif_user_read (user_id, is_read, created_at)");
+            }
+        }
 
         $type = $db->query("SELECT COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'status'")->fetchColumn();
         if ($type && stripos($type, 'archived') === false) {

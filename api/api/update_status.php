@@ -18,7 +18,6 @@ if (!verifyCsrfToken($csrf)) {
 $appointmentId = (int)($_POST['appointment_id'] ?? 0);
 $status = $_POST['status'] ?? '';
 $staffId = (int)($_POST['staff_id'] ?? 0);
-$room = trim($_POST['room'] ?? '');
 
 if (!$appointmentId || !$status) {
     echo json_encode(['success' => false, 'message' => 'Missing required fields']);
@@ -47,8 +46,16 @@ try {
             echo json_encode(['success' => false, 'message' => 'Staff member not found']);
             exit;
         }
-        $stmt = $db->prepare("UPDATE appointments SET status = ?, healthcare_worker_id = ?, room = ?, updated_at = NOW() WHERE id = ?");
-        $stmt->execute([$status, $staffId, $room, $appointmentId]);
+
+    // Busy staff cannot be assigned: another pending/confirmed booking at the same date + time
+    $busy = $db->prepare("SELECT appointment_code FROM appointments WHERE healthcare_worker_id = ? AND appointment_date = (SELECT appointment_date FROM appointments WHERE id = ?) AND appointment_time = (SELECT appointment_time FROM appointments WHERE id = ?) AND status IN ('pending','confirmed') AND id != ? LIMIT 1");
+    $busy->execute([$staffId, $appointmentId, $appointmentId, $appointmentId]);
+    if ($busyCode = $busy->fetchColumn()) {
+        echo json_encode(['success' => false, 'message' => 'This staff member is busy at that time (already assigned to ' . $busyCode . '). Please choose a vacant staff member.']);
+        exit;
+    }
+        $stmt = $db->prepare("UPDATE appointments SET status = ?, healthcare_worker_id = ?, updated_at = NOW() WHERE id = ?");
+        $stmt->execute([$status, $staffId, $appointmentId]);
     } else {
         $stmt = $db->prepare("UPDATE appointments SET status = ?, updated_at = NOW() WHERE id = ?");
         $stmt->execute([$status, $appointmentId]);

@@ -31,7 +31,7 @@ try {
         'success' => true,
         'date' => $date,
         'slots' => $slots,
-        'total_available' => count(array_filter($slots, fn($s) => !$s['is_blocked'] && $s['available'] > 0))
+        'total_available' => count(array_filter($slots, fn($s) => !$s['is_blocked'] && empty($s['is_past']) && $s['available'] > 0))
     ]);
 
 } catch (Exception $e) {

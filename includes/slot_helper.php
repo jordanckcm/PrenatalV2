@@ -114,10 +114,15 @@ function getSlotsForDate($db, $date) {
         $bookedMap[$row['appointment_time']] = (int)$row['booked'];
     }
 
+    // Slots whose start time has already passed today can no longer be booked
+    $isToday = ($date === date('Y-m-d'));
+    $nowTime = date('H:i:s');
+
     $result = [];
     foreach ($slots as $slot) {
         $booked = isset($bookedMap[$slot['time']]) ? $bookedMap[$slot['time']] : 0;
         $available = max(0, $slot['capacity'] - $booked);
+        $isPast = ($date < date('Y-m-d')) || ($isToday && $slot['time'] <= $nowTime);
 
         $result[] = [
             'time' => $slot['time'],
@@ -127,6 +132,7 @@ function getSlotsForDate($db, $date) {
             'available' => (int)$available,
             'is_blocked' => (bool)$slot['is_blocked'],
             'is_full' => $available <= 0,
+            'is_past' => $isPast,
         ];
     }
 
@@ -137,7 +143,7 @@ function isSlotAvailable($db, $date, $time) {
     $slots = getSlotsForDate($db, $date);
     foreach ($slots as $slot) {
         if ($slot['time'] === $time) {
-            return !$slot['is_blocked'] && $slot['available'] > 0;
+            return !$slot['is_blocked'] && !$slot['is_past'] && $slot['available'] > 0;
         }
     }
     return false;

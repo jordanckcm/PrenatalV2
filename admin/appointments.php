@@ -161,9 +161,6 @@ include __DIR__ . '/../includes/header.php';
                         <td>
                             <?php if (!empty($a['worker_name'])): ?>
                                 <i class="fa-solid fa-user-doctor text-primary"></i> <?php echo sanitize($a['worker_name']); ?>
-                                <?php if (!empty($a['room'])): ?>
-                                    <br><small class="text-muted"><i class="fa-solid fa-door-open"></i> <?php echo sanitize($a['room']); ?></small>
-                                <?php endif; ?>
                             <?php else: ?>
                                 <span class="badge badge-pending" style="font-size:0.75rem;">Unassigned</span>
                             <?php endif; ?>
@@ -177,7 +174,6 @@ include __DIR__ . '/../includes/header.php';
                                             "patient_name" => $a["patient_name"], "service_name" => $a["service_name"],
                                             "date" => $a["appointment_date"], "time" => $a["appointment_time"],
                                             "worker_id" => (int)($a["healthcare_worker_id"] ?? 0),
-                                            "room" => $a["room"] ?? '',
                                             "date_formatted" => date("M d, Y", strtotime($a["appointment_date"])),
                                             "time_formatted" => date("g:i A", strtotime($a["appointment_time"]))
                                         ]), ENT_QUOTES, 'UTF-8'); ?>'>
@@ -190,7 +186,6 @@ include __DIR__ . '/../includes/header.php';
                                             "patient_name" => $a["patient_name"], "service_name" => $a["service_name"],
                                             "date" => $a["appointment_date"], "time" => $a["appointment_time"],
                                             "worker_id" => (int)($a["healthcare_worker_id"] ?? 0),
-                                            "room" => $a["room"] ?? '',
                                             "date_formatted" => date("M d, Y", strtotime($a["appointment_date"])),
                                             "time_formatted" => date("g:i A", strtotime($a["appointment_time"])),
                                             "reassign" => true
@@ -240,19 +235,6 @@ include __DIR__ . '/../includes/header.php';
                 <label class="form-label">Healthcare Staff *</label>
                 <select id="am_staff_select" class="form-control">
                     <option value="">Loading staff availability...</option>
-                </select>
-            </div>
-
-            <div class="form-group" id="am_room_group">
-                <label class="form-label">Room / Service Area</label>
-                <select id="am_room" class="form-control">
-                    <option value="">-- Select Room / Service --</option>
-                    <option value="Room 1 - High-Risk Prenatal Screening">Room 1 - High-Risk Prenatal Screening</option>
-                    <option value="Room 2 - Laboratory Test (Blood & Urine)">Room 2 - Laboratory Test (Blood & Urine)</option>
-                    <option value="Room 3 - Obstetric Ultrasound (Pelvic/3D)">Room 3 - Obstetric Ultrasound (Pelvic/3D)</option>
-                    <option value="Room 4 - Postnatal Checkup & Family Planning">Room 4 - Postnatal Checkup & Family Planning</option>
-                    <option value="Room 5 - Routine Prenatal Consultation">Room 5 - Routine Prenatal Consultation</option>
-                    <option value="Room 6 - Tetanus Toxoid & Maternal Immunization">Room 6 - Tetanus Toxoid & Maternal Immunization</option>
                 </select>
             </div>
 
@@ -348,7 +330,6 @@ include __DIR__ . '/../includes/header.php';
         var elTitle = document.getElementById('am_title');
         var btn = document.getElementById('am_submit_btn');
         var select = document.getElementById('am_staff_select');
-        var roomSelect = document.getElementById('am_room');
 
         if (elPatient) elPatient.innerText = appt.patient_name;
         if (elCode) elCode.innerText = appt.code;
@@ -358,7 +339,7 @@ include __DIR__ . '/../includes/header.php';
 
         if (elTitle) {
             elTitle.innerHTML = appt.reassign
-                ? '<i class="fa-solid fa-user-pen text-primary"></i> Reassign Staff & Room'
+                ? '<i class="fa-solid fa-user-pen text-primary"></i> Reassign Staff'
                 : '<i class="fa-solid fa-user-check text-primary"></i> Confirm Booking & Assign Staff';
         }
 
@@ -367,8 +348,6 @@ include __DIR__ . '/../includes/header.php';
             btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> <span id="am_submit_label">' +
                 (appt.reassign ? 'Save Assignment' : 'Confirm Booking') + '</span>';
         }
-
-        if (roomSelect) roomSelect.value = appt.room || '';
 
         if (select) {
             select.disabled = false;
@@ -393,9 +372,10 @@ include __DIR__ . '/../includes/header.php';
                         opt.value = s.staff_id;
                         var marker = s.is_vacant ? '✓ Vacant' : (s.is_on_duty ? '⚠ ' + s.status_text : '✕ Off Duty');
                         opt.text = s.full_name + ' (' + marker + ')';
+                        if (!s.is_vacant) opt.disabled = true;
 
                         if (s.is_vacant && !firstVacantId) firstVacantId = s.staff_id;
-                        if (appt.worker_id && s.staff_id == appt.worker_id) {
+                        if (appt.worker_id && s.staff_id == appt.worker_id && s.is_vacant) {
                             opt.selected = true;
                             preselected = true;
                         }
@@ -403,9 +383,7 @@ include __DIR__ . '/../includes/header.php';
                     });
 
                     if (!preselected) {
-                        if (appt.worker_id) select.value = appt.worker_id;
-                        else if (firstVacantId) select.value = firstVacantId;
-                        else if (data.staff_roster[0]) select.value = data.staff_roster[0].staff_id;
+                        if (firstVacantId) select.value = firstVacantId;
                     }
                 } else {
                     select.innerHTML = '<option value="">No active staff members found</option>';
@@ -425,8 +403,6 @@ include __DIR__ . '/../includes/header.php';
 
         var staffSelect = document.getElementById('am_staff_select');
         var staffId = staffSelect ? staffSelect.value : '';
-        var roomSelect = document.getElementById('am_room');
-        var roomValue = roomSelect ? roomSelect.value : '';
         var errBox = document.getElementById('am_error');
         var btn = document.getElementById('am_submit_btn');
 
@@ -457,7 +433,6 @@ include __DIR__ . '/../includes/header.php';
             endpoint = _baseUrl + 'api/assign_staff.php';
         } else {
             fd.append('status', 'confirmed');
-            fd.append('room', roomValue);
         }
 
         fetch(endpoint, { method: 'POST', body: fd })

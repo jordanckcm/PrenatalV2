@@ -186,6 +186,11 @@ include __DIR__ . '/../includes/header.php';
         <h1>Clinic Services</h1>
         <p>Manage clinic services, examination forms, and booking settings</p>
     </div>
+    <div>
+        <button type="button" class="btn btn-primary js-open-add-service">
+            <i class="fa-solid fa-plus"></i> Add Service
+        </button>
+    </div>
 </div>
 
 <?php if ($successMsg): ?>
@@ -553,6 +558,15 @@ include __DIR__ . '/../includes/header.php';
     }
 
     document.addEventListener('click', function(e) {
+        var addBtn = e.target.closest('.js-open-add-service');
+        if (addBtn) {
+            e.preventDefault();
+            var addForm = document.getElementById('addServiceForm');
+            if (addForm) addForm.reset();
+            showModal('addServiceModal');
+            return;
+        }
+
         var editBtn = e.target.closest('.js-edit-service');
         if (editBtn) {
             e.preventDefault();
