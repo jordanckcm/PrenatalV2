@@ -146,11 +146,11 @@ include __DIR__ . '/../includes/header.php';
             <div style="position:relative;">
                 <div id="avatarPreview" style="
                     width:90px; height:90px; border-radius:50%;
-                    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+                    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
                     color:#fff; display:flex; align-items:center; justify-content:center;
                     font-family:'Bricolage Grotesque', sans-serif;
                     font-size:2.2rem; font-weight:800;
-                    box-shadow: 0 8px 20px rgba(249,115,22,0.35);
+                    box-shadow: 0 8px 20px rgba(14, 165, 233,0.35);
                     overflow:hidden;
                     border: 4px solid var(--surface);
                 ">

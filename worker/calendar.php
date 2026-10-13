@@ -88,7 +88,7 @@ include __DIR__ . '/../includes/header.php';
    ============================================ */
 
 :root {
-    --gradient-primary: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    --gradient-primary: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
     --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
     --gradient-info: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
     --gradient-purple: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
@@ -125,7 +125,7 @@ include __DIR__ . '/../includes/header.php';
     transition: all 0.35s ease;
 }
 
-.stat-card-modern.orange::before { background: #f97316; }
+.stat-card-modern.orange::before { background: #0ea5e9; }
 .stat-card-modern.blue::before { background: #3b82f6; }
 .stat-card-modern.green::before { background: #10b981; }
 .stat-card-modern.purple::before { background: #8b5cf6; }
@@ -155,7 +155,7 @@ include __DIR__ . '/../includes/header.php';
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
-.stat-card-modern.orange .stat-icon-modern { background: var(--gradient-primary); box-shadow: 0 8px 20px rgba(249, 115, 22, 0.35); }
+.stat-card-modern.orange .stat-icon-modern { background: var(--gradient-primary); box-shadow: 0 8px 20px rgba(14, 165, 233, 0.35); }
 .stat-card-modern.blue .stat-icon-modern { background: var(--gradient-info); box-shadow: 0 8px 20px rgba(59, 130, 246, 0.35); }
 .stat-card-modern.green .stat-icon-modern { background: var(--gradient-success); box-shadow: 0 8px 20px rgba(16, 185, 129, 0.35); }
 .stat-card-modern.purple .stat-icon-modern { background: var(--gradient-purple); box-shadow: 0 8px 20px rgba(139, 92, 246, 0.35); }
@@ -237,7 +237,7 @@ include __DIR__ . '/../includes/header.php';
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
-    box-shadow: 0 10px 25px rgba(249, 115, 22, 0.35);
+    box-shadow: 0 10px 25px rgba(14, 165, 233, 0.35);
     position: relative;
 }
 
@@ -316,14 +316,14 @@ include __DIR__ . '/../includes/header.php';
     cursor: pointer;
     text-decoration: none;
     transition: all 0.25s ease;
-    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .cal-today-btn-modern:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(249, 115, 22, 0.45);
+    box-shadow: 0 6px 16px rgba(14, 165, 233, 0.45);
 }
 
 /* ---------- LEGEND ---------- */
@@ -362,7 +362,7 @@ include __DIR__ . '/../includes/header.php';
 
 .legend-dot-modern.open { background: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2); }
 .legend-dot-modern.closed { background: #dc3545; box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.2); }
-.legend-dot-modern.today { background: #f97316; box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2); }
+.legend-dot-modern.today { background: #0ea5e9; box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2); }
 
 /* ---------- WEEKDAYS ---------- */
 .cal-weekdays-modern {
@@ -421,7 +421,7 @@ include __DIR__ . '/../includes/header.php';
 
 .cal-day-modern:hover {
     border-color: var(--primary);
-    box-shadow: 0 12px 30px rgba(249, 115, 22, 0.15);
+    box-shadow: 0 12px 30px rgba(14, 165, 233, 0.15);
     transform: translateY(-4px);
 }
 
@@ -445,8 +445,8 @@ include __DIR__ . '/../includes/header.php';
 .cal-day-modern.today {
     border-color: var(--primary);
     border-width: 2px;
-    background: linear-gradient(135deg, rgba(249, 115, 22, 0.06) 0%, var(--surface) 100%);
-    box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1), 0 8px 24px rgba(249, 115, 22, 0.15);
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.06) 0%, var(--surface) 100%);
+    box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1), 0 8px 24px rgba(14, 165, 233, 0.15);
 }
 
 .cal-day-modern.today::before {
@@ -501,13 +501,13 @@ include __DIR__ . '/../includes/header.php';
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.8px;
-    box-shadow: 0 3px 8px rgba(249, 115, 22, 0.35);
+    box-shadow: 0 3px 8px rgba(14, 165, 233, 0.35);
     animation: pulseGlow 2s ease-in-out infinite;
 }
 
 @keyframes pulseGlow {
-    0%, 100% { box-shadow: 0 3px 8px rgba(249, 115, 22, 0.35); }
-    50% { box-shadow: 0 3px 16px rgba(249, 115, 22, 0.6); }
+    0%, 100% { box-shadow: 0 3px 8px rgba(14, 165, 233, 0.35); }
+    50% { box-shadow: 0 3px 16px rgba(14, 165, 233, 0.6); }
 }
 
 .appt-chip-modern {
@@ -541,7 +541,7 @@ include __DIR__ . '/../includes/header.php';
 }
 
 .appt-item-modern {
-    background: linear-gradient(135deg, #fff5ed 0%, #ffe8dc 100%);
+    background: linear-gradient(135deg, #f0f9ff 0%, #ffe8dc 100%);
     border-radius: 10px;
     padding: 0.45rem 0.6rem;
     font-size: 0.68rem;
@@ -558,28 +558,28 @@ include __DIR__ . '/../includes/header.php';
 }
 
 :root[data-theme="dark"] .appt-item-modern {
-    background: linear-gradient(135deg, #2a1a0f 0%, #3a1a0f 100%);
-    color: #fdba74;
+    background: linear-gradient(135deg, #0c2a3d 0%, #3a1a0f 100%);
+    color: #7dd3fc;
 }
 
 .appt-item-modern:hover {
     transform: translateX(4px);
-    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.25);
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25);
 }
 
 .appt-time-modern {
     font-weight: 800;
     color: var(--primary);
     font-size: 0.6rem;
-    background: rgba(249, 115, 22, 0.15);
+    background: rgba(14, 165, 233, 0.15);
     padding: 0.15rem 0.4rem;
     border-radius: 6px;
     flex-shrink: 0;
 }
 
 :root[data-theme="dark"] .appt-time-modern {
-    color: #fb923c;
-    background: rgba(251, 146, 60, 0.2);
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.2);
 }
 
 .appt-name-modern {
@@ -598,7 +598,7 @@ include __DIR__ . '/../includes/header.php';
     background: var(--primary-light);
     border-radius: 8px;
     margin-top: 0.2rem;
-    border: 1px dashed rgba(249, 115, 22, 0.3);
+    border: 1px dashed rgba(14, 165, 233, 0.3);
     transition: all 0.2s;
 }
 
@@ -652,7 +652,7 @@ include __DIR__ . '/../includes/header.php';
         height: 7px;
         border-radius: 50%;
         background: var(--gradient-primary);
-        box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.15);
+        box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.15);
     }
     .modern-stats { grid-template-columns: 1fr; }
     .cal-header-modern { gap: 0.75rem; }

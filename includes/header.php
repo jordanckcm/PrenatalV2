@@ -161,7 +161,7 @@ if ($currentRole === 'admin') {
                     <i class="fa-solid <?php echo $item['icon']; ?>"></i>
                     <span><?php echo $item['label']; ?></span>
                     <?php if (!empty($item['notif'])): ?>
-                        <span class="notif-nav-badge" style="<?php echo $unreadNotifCount > 0 ? '' : 'display:none;'; ?>background:var(--primary,#F97316);color:#fff;font-size:.65rem;font-weight:800;border-radius:999px;padding:.15rem .45rem;min-width:1.3rem;text-align:center;margin-left:auto;line-height:1.4;"><?php echo $unreadNotifCount; ?></span>
+                        <span class="notif-nav-badge" style="<?php echo $unreadNotifCount > 0 ? '' : 'display:none;'; ?>background:var(--primary,#0ea5e9);color:#fff;font-size:.65rem;font-weight:800;border-radius:999px;padding:.15rem .45rem;min-width:1.3rem;text-align:center;margin-left:auto;line-height:1.4;"><?php echo $unreadNotifCount; ?></span>
                     <?php endif; ?>
                     <?php if (!empty($item['badge'])): ?>
                         <span class="nav-badge"><?php echo $item['badge']; ?></span>
@@ -222,7 +222,7 @@ if ($currentRole === 'admin') {
             <div class="notif-bell-wrap" style="position:relative;">
                 <button type="button" id="notifBellBtn" class="btn btn-outline btn-icon" aria-label="Notifications" style="position:relative;">
                     <i class="fa-solid fa-bell"></i>
-                    <span class="notif-nav-badge" id="notifBellBadge" style="<?php echo $unreadNotifCount > 0 ? '' : 'display:none;'; ?>position:absolute;top:-6px;right:-6px;background:var(--primary,#F97316);color:#fff;font-size:.62rem;font-weight:800;border-radius:999px;padding:.1rem .38rem;min-width:1.1rem;text-align:center;line-height:1.35;"><?php echo $unreadNotifCount; ?></span>
+                    <span class="notif-nav-badge" id="notifBellBadge" style="<?php echo $unreadNotifCount > 0 ? '' : 'display:none;'; ?>position:absolute;top:-6px;right:-6px;background:var(--primary,#0ea5e9);color:#fff;font-size:.62rem;font-weight:800;border-radius:999px;padding:.1rem .38rem;min-width:1.1rem;text-align:center;line-height:1.35;"><?php echo $unreadNotifCount; ?></span>
                 </button>
                 <div id="notifDropdown" style="display:none;position:absolute;right:0;top:calc(100% + 8px);width:340px;max-width:92vw;background:var(--surface);border:1px solid var(--border-color);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.18);z-index:1000;overflow:hidden;">
                     <div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem 1rem;border-bottom:1px solid var(--border-color);">

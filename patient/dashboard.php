@@ -81,7 +81,7 @@ include __DIR__ . '/../includes/header.php';
    ============================================ */
 
 .patient-hero {
-    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
     border-radius: 20px;
     padding: 2rem;
     color: #fff;
@@ -205,9 +205,9 @@ include __DIR__ . '/../includes/header.php';
     width: 6px;
 }
 
-.patient-stat-card.orange::before { background: linear-gradient(180deg, #f97316, #ea580c); }
+.patient-stat-card.orange::before { background: linear-gradient(180deg, #0ea5e9, #0284c7); }
 .patient-stat-card.green::before { background: linear-gradient(180deg, #10b981, #059669); }
-.patient-stat-card.blue::before { background: linear-gradient(180deg, #0d6efd, #0a58ca); }
+.patient-stat-card.blue::before { background: linear-gradient(180deg, #6366f1, #4f46e5); }
 .patient-stat-card.purple::before { background: linear-gradient(180deg, #8b5cf6, #7c3aed); }
 
 .patient-stat-icon {
@@ -222,9 +222,9 @@ include __DIR__ . '/../includes/header.php';
     flex-shrink: 0;
 }
 
-.patient-stat-card.orange .patient-stat-icon { background: linear-gradient(135deg, #f97316, #ea580c); box-shadow: 0 6px 16px rgba(249, 115, 22, 0.3); }
+.patient-stat-card.orange .patient-stat-icon { background: linear-gradient(135deg, #0ea5e9, #0284c7); box-shadow: 0 6px 16px rgba(14, 165, 233, 0.3); }
 .patient-stat-card.green .patient-stat-icon { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3); }
-.patient-stat-card.blue .patient-stat-icon { background: linear-gradient(135deg, #0d6efd, #0a58ca); box-shadow: 0 6px 16px rgba(13, 110, 253, 0.3); }
+.patient-stat-card.blue .patient-stat-icon { background: linear-gradient(135deg, #6366f1, #4f46e5); box-shadow: 0 6px 16px rgba(99, 102, 241, 0.3); }
 .patient-stat-card.purple .patient-stat-icon { background: linear-gradient(135deg, #8b5cf6, #7c3aed); box-shadow: 0 6px 16px rgba(139, 92, 246, 0.3); }
 
 .patient-stat-info {
@@ -342,14 +342,14 @@ include __DIR__ . '/../includes/header.php';
 /* Next Appointment */
 .next-appt-item {
     padding: 1rem;
-    background: linear-gradient(135deg, #fff5ed 0%, #ffe8dc 100%);
+    background: linear-gradient(135deg, #f0f9ff 0%, #ffe8dc 100%);
     border-left: 4px solid var(--primary);
     border-radius: 12px;
     margin-bottom: 1rem;
 }
 
 :root[data-theme="dark"] .next-appt-item {
-    background: linear-gradient(135deg, #2a1a0f 0%, #3a1a0f 100%);
+    background: linear-gradient(135deg, #0c2a3d 0%, #3a1a0f 100%);
 }
 
 .next-appt-service {
@@ -466,7 +466,7 @@ include __DIR__ . '/../includes/header.php';
 .quick-action-tile:hover {
     transform: translateY(-3px);
     border-color: var(--primary);
-    box-shadow: 0 8px 20px rgba(249, 115, 22, 0.15);
+    box-shadow: 0 8px 20px rgba(14, 165, 233, 0.15);
 }
 
 .quick-action-icon {

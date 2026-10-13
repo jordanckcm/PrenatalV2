@@ -289,7 +289,7 @@ include __DIR__ . '/includes/header.php';
     </button>
     <button type="button" id="tabBtnPreferences" class="settings-tab-btn" onclick="switchSettingsTab('preferences')" style="padding-bottom: 0.85rem; font-weight: 600; font-size: 0.95rem; color: var(--text-muted); border: none; background: none; cursor: pointer; display: flex; align-items: center; gap: 0.4rem;">
         Preferences
-        <span style="background: rgba(249, 115, 22, 0.2); color: #F97316; font-size: 0.65rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 999px; text-transform: uppercase;">New</span>
+        <span style="background: rgba(14, 165, 233, 0.2); color: #0ea5e9; font-size: 0.65rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 999px; text-transform: uppercase;">New</span>
     </button>
 </div>
 
@@ -485,7 +485,7 @@ include __DIR__ . '/includes/header.php';
                             <p style="color: var(--text-muted); margin: 0; font-size: 0.88rem;">Manage your pregnancy tracking data, emergency contacts, and obstetric history.</p>
                         </div>
                         <?php if ($patientRecord && !empty($patientRecord['patient_code'])): ?>
-                            <span class="badge" style="background: rgba(249, 115, 22, 0.15); color: var(--primary); font-weight: 700; font-size: 0.85rem; padding: 0.4rem 0.85rem; border-radius: 999px;">
+                            <span class="badge" style="background: rgba(14, 165, 233, 0.15); color: var(--primary); font-weight: 700; font-size: 0.85rem; padding: 0.4rem 0.85rem; border-radius: 999px;">
                                 Patient Code: <?php echo sanitize($patientRecord['patient_code']); ?>
                             </span>
                         <?php endif; ?>
@@ -606,7 +606,7 @@ include __DIR__ . '/includes/header.php';
 
         <!-- Dark Theme Option (Active Orange Border matching Image 2) -->
         <div id="themeOptDark" onclick="selectThemeOption('dark')" style="cursor: pointer; text-align: center;">
-            <div class="theme-card-box" style="height: 150px; border-radius: 18px; border: 2px solid #F97316; background: #09090B; padding: 0.85rem; display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.75rem; transition: var(--transition);">
+            <div class="theme-card-box" style="height: 150px; border-radius: 18px; border: 2px solid #0ea5e9; background: #09090B; padding: 0.85rem; display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.75rem; transition: var(--transition);">
                 <div style="height: 10px; width: 50%; background: #27272A; border-radius: 4px;"></div>
                 <div style="height: 8px; width: 35%; background: #3F3F46; border-radius: 4px;"></div>
                 <div style="flex: 1; background: #18181B; border: 1px solid #27272A; border-radius: 10px; padding: 0.5rem;">
@@ -614,7 +614,7 @@ include __DIR__ . '/includes/header.php';
                     <div style="height: 6px; width: 40%; background: #27272A; border-radius: 3px;"></div>
                 </div>
             </div>
-            <div class="theme-label" style="font-weight: 700; font-size: 0.9rem; color: #F97316;">Dark</div>
+            <div class="theme-label" style="font-weight: 700; font-size: 0.9rem; color: #0ea5e9;">Dark</div>
         </div>
 
     </div>
@@ -661,8 +661,8 @@ function selectThemeOption(mode) {
         const box = wrapper.querySelector('.theme-card-box');
         const label = wrapper.querySelector('.theme-label');
         if (opt.toLowerCase() === mode) {
-            box.style.borderColor = '#F97316';
-            label.style.color = '#F97316';
+            box.style.borderColor = '#0ea5e9';
+            label.style.color = '#0ea5e9';
         } else {
             box.style.borderColor = 'var(--border-color)';
             label.style.color = 'var(--text-muted)';

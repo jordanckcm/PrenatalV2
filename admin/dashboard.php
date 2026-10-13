@@ -103,9 +103,9 @@ include __DIR__ . '/../includes/header.php';
     background: var(--primary);
 }
 
-.stat-card.orange::before { background: #f97316; }
+.stat-card.orange::before { background: #0ea5e9; }
 .stat-card.yellow::before { background: #f59e0b; }
-.stat-card.blue::before { background: #0d6efd; }
+.stat-card.blue::before { background: #6366f1; }
 .stat-card.green::before { background: #10b981; }
 .stat-card.purple::before { background: #8b5cf6; }
 .stat-card.red::before { background: #dc3545; }
@@ -128,9 +128,9 @@ include __DIR__ . '/../includes/header.php';
     color: #fff;
 }
 
-.stat-icon.orange { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); }
+.stat-icon.orange { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); }
 .stat-icon.yellow { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
-.stat-icon.blue { background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); }
+.stat-icon.blue { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); }
 .stat-icon.green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
 .stat-icon.purple { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
 .stat-icon.red { background: linear-gradient(135deg, #dc3545 0%, #b91c1c 100%); }
@@ -188,7 +188,7 @@ include __DIR__ . '/../includes/header.php';
 .action-tile:hover {
     transform: translateY(-2px);
     border-color: var(--primary);
-    box-shadow: 0 6px 16px rgba(249, 115, 22, 0.12);
+    box-shadow: 0 6px 16px rgba(14, 165, 233, 0.12);
 }
 
 .action-tile-icon {

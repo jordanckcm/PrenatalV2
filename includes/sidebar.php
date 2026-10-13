@@ -13,7 +13,7 @@ $systemLogoUrl = getSystemLogoUrl();
 <aside class="sidebar">
     <div class="sidebar-header">
         <div class="sidebar-brand-title">
-            <div style="width:34px; height:34px; border-radius:10px; background:rgba(249, 115, 22, 0.15); border:1px solid rgba(249, 115, 22, 0.3); color:#F97316; display:flex; align-items:center; justify-content:center; flex-shrink:0; overflow:hidden;">
+            <div style="width:34px; height:34px; border-radius:10px; background:rgba(14, 165, 233, 0.15); border:1px solid rgba(14, 165, 233, 0.3); color:#0ea5e9; display:flex; align-items:center; justify-content:center; flex-shrink:0; overflow:hidden;">
                 <?php if ($systemLogoUrl): ?>
                     <img src="<?php echo $systemLogoUrl; ?>" alt="Logo" style="width:100%; height:100%; object-fit:cover;">
                 <?php else: ?>
@@ -72,7 +72,7 @@ $systemLogoUrl = getSystemLogoUrl();
                     <i class="fa-solid fa-bell"></i>
                     <span>Notifications</span>
                     <?php if ($unreadPatientNotifCount > 0): ?>
-                        <span style="background:var(--primary,#F97316);color:#fff;font-size:.65rem;font-weight:800;border-radius:999px;padding:.15rem .45rem;min-width:1.3rem;text-align:center;margin-left:auto;line-height:1.4;">
+                        <span style="background:var(--primary,#0ea5e9);color:#fff;font-size:.65rem;font-weight:800;border-radius:999px;padding:.15rem .45rem;min-width:1.3rem;text-align:center;margin-left:auto;line-height:1.4;">
                             <?php echo $unreadPatientNotifCount; ?>
                         </span>
                     <?php endif; ?>
@@ -173,7 +173,7 @@ $systemLogoUrl = getSystemLogoUrl();
                     <i class="fa-solid fa-calendar-check"></i>
                     <span>Booking Requests</span>
                     <?php if ($pendingSidebarCount > 0): ?>
-                        <span style="background:var(--primary,#F97316);color:#fff;font-size:.65rem;font-weight:800;border-radius:999px;padding:.15rem .45rem;min-width:1.3rem;text-align:center;margin-left:auto;line-height:1.4;">
+                        <span style="background:var(--primary,#0ea5e9);color:#fff;font-size:.65rem;font-weight:800;border-radius:999px;padding:.15rem .45rem;min-width:1.3rem;text-align:center;margin-left:auto;line-height:1.4;">
                             <?php echo $pendingSidebarCount; ?>
                         </span>
                     <?php endif; ?>

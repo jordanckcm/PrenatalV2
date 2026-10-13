@@ -343,7 +343,7 @@ include __DIR__ . '/../includes/header.php';
     letter-spacing: 0.5px;
     margin-left: 0.5rem;
 }
-.service-badge.routine { background: #fff5ed; color: #ea580c; }
+.service-badge.routine { background: #f0f9ff; color: #0284c7; }
 .service-badge.ultrasound { background: #e0f2fe; color: #0369a1; }
 .service-badge.lab { background: #fef3c7; color: #92400e; }
 .service-badge.vaccine { background: #f3e5f5; color: #7b1fa2; }

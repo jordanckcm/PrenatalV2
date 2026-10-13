@@ -22,7 +22,7 @@ body.au {
 /* ---------- Curved organic wave illustration pane (Right side) ---------- */
 .au-info {
     position: relative;
-    background: linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, rgba(20, 184, 166, 0.12) 100%);
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.08) 0%, rgba(20, 184, 166, 0.12) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -74,9 +74,9 @@ body.au {
     width: 42px;
     height: 42px;
     border-radius: 50%;
-    background: rgba(249, 115, 22, 0.15);
-    border: 1px solid rgba(249, 115, 22, 0.3);
-    color: #F97316;
+    background: rgba(14, 165, 233, 0.15);
+    border: 1px solid rgba(14, 165, 233, 0.3);
+    color: #0ea5e9;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -333,7 +333,7 @@ body.au {
     outline: none;
     border-color: var(--primary) !important;
     background: var(--surface);
-    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.25);
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.25);
     color: var(--text-dark);
 }
 
@@ -371,7 +371,7 @@ body.au {
     align-items: center;
     justify-content: center;
     gap: 0.65rem;
-    background: #F97316 !important;
+    background: #0ea5e9 !important;
     color: #FFFFFF !important;
     border: none;
     border-radius: var(--radius-sm);
@@ -380,7 +380,7 @@ body.au {
     font-size: 1rem;
     cursor: pointer;
     transition: var(--transition);
-    box-shadow: 0 6px 20px rgba(249, 115, 22, 0.4);
+    box-shadow: 0 6px 20px rgba(14, 165, 233, 0.4);
     margin-top: 0.75rem;
 }
 
@@ -389,9 +389,9 @@ body.au {
 }
 
 .au-btn:hover {
-    background: #EA580C !important;
+    background: #0284c7 !important;
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(249, 115, 22, 0.5);
+    box-shadow: 0 8px 25px rgba(14, 165, 233, 0.5);
 }
 
 .au-btn:disabled {

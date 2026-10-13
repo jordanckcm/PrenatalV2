@@ -257,10 +257,10 @@ include __DIR__ . '/../includes/header.php';
     <div class="dashboard-card" style="padding:1.5rem; text-align:center;">
         <div style="
             width:52px; height:52px; border-radius:14px;
-            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
             color:#fff; display:flex; align-items:center; justify-content:center;
             font-size:1.3rem; margin:0 auto 0.75rem;
-            box-shadow: 0 4px 12px rgba(249,115,22,0.3);
+            box-shadow: 0 4px 12px rgba(14, 165, 233,0.3);
         ">
             <i class="fa-solid fa-calendar-check"></i>
         </div>

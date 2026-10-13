@@ -300,7 +300,7 @@ include __DIR__ . '/../includes/header.php';
 
 .form-control:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
 }
 
 .form-control::placeholder {
@@ -384,9 +384,9 @@ include __DIR__ . '/../includes/header.php';
     flex-shrink: 0;
 }
 
-.patient-stat-card.orange .patient-stat-icon { background: linear-gradient(135deg, #f97316, #ea580c); box-shadow: 0 6px 16px rgba(249, 115, 22, 0.3); }
+.patient-stat-card.orange .patient-stat-icon { background: linear-gradient(135deg, #0ea5e9, #0284c7); box-shadow: 0 6px 16px rgba(14, 165, 233, 0.3); }
 .patient-stat-card.green .patient-stat-icon { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3); }
-.patient-stat-card.blue .patient-stat-icon { background: linear-gradient(135deg, #0d6efd, #0a58ca); box-shadow: 0 6px 16px rgba(13, 110, 253, 0.3); }
+.patient-stat-card.blue .patient-stat-icon { background: linear-gradient(135deg, #6366f1, #4f46e5); box-shadow: 0 6px 16px rgba(99, 102, 241, 0.3); }
 
 .patient-stat-value {
     font-family: 'Bricolage Grotesque', sans-serif;

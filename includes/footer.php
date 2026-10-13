@@ -213,7 +213,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!items.length) { list.innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--text-muted);font-size:.85rem;">No notifications yet.</div>'; return; }
         list.innerHTML = items.map(function (n) {
             var tag = n.link ? 'a' : 'div';
-            return '<' + tag + (n.link ? ' href="' + esc(n.link) + '"' : '') + ' data-id="' + n.id + '" class="notif-item" style="display:block;padding:.7rem 1rem;border-bottom:1px solid var(--border-color);text-decoration:none;color:inherit;background:' + (n.is_read ? 'transparent' : 'rgba(249,115,22,.06)') + ';">' +
+            return '<' + tag + (n.link ? ' href="' + esc(n.link) + '"' : '') + ' data-id="' + n.id + '" class="notif-item" style="display:block;padding:.7rem 1rem;border-bottom:1px solid var(--border-color);text-decoration:none;color:inherit;background:' + (n.is_read ? 'transparent' : 'rgba(14, 165, 233,.06)') + ';">' +
                 '<div style="font-weight:' + (n.is_read ? '600' : '800') + ';font-size:.84rem;">' + esc(n.title) + '</div>' +
                 '<div style="font-size:.78rem;color:var(--text-muted);margin-top:.15rem;">' + esc(n.message) + '</div>' +
                 '<div style="font-size:.7rem;color:var(--text-muted);margin-top:.25rem;">' + esc(n.time) + '</div></' + tag + '>';

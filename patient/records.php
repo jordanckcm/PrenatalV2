@@ -180,7 +180,7 @@ include __DIR__ . '/../includes/header.php';
     bottom: 20px;
     width: 3px;
     background: linear-gradient(180deg, 
-        #f97316 0%, 
+        #0ea5e9 0%, 
         #ec4899 25%, 
         #8b5cf6 50%, 
         #3b82f6 75%, 
@@ -214,7 +214,7 @@ include __DIR__ . '/../includes/header.php';
     width: 15px;
     height: 15px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #f97316, #ea580c);
+    background: linear-gradient(135deg, #0ea5e9, #0284c7);
 }
 
 .timeline-item:nth-child(2) .timeline-dot { border-color: #ec4899; }
@@ -243,7 +243,7 @@ include __DIR__ . '/../includes/header.php';
     left: 0;
     width: 5px;
     height: 100%;
-    background: linear-gradient(180deg, #f97316, #ea580c);
+    background: linear-gradient(180deg, #0ea5e9, #0284c7);
     opacity: 0;
     transition: opacity 0.3s;
 }
@@ -261,7 +261,7 @@ include __DIR__ . '/../includes/header.php';
 /* Record Header */
 .record-head {
     padding: 1.5rem 1.75rem;
-    background: linear-gradient(135deg, rgba(249, 115, 22, 0.05) 0%, rgba(236, 72, 153, 0.05) 100%);
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.05) 0%, rgba(236, 72, 153, 0.05) 100%);
     border-bottom: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
@@ -280,14 +280,14 @@ include __DIR__ . '/../includes/header.php';
     width: 60px;
     height: 60px;
     border-radius: 16px;
-    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
     color: #fff;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     font-family: 'Bricolage Grotesque', sans-serif;
-    box-shadow: 0 8px 20px rgba(249, 115, 22, 0.35);
+    box-shadow: 0 8px 20px rgba(14, 165, 233, 0.35);
     flex-shrink: 0;
 }
 
@@ -417,7 +417,7 @@ include __DIR__ . '/../includes/header.php';
     right: 0;
     width: 40px;
     height: 40px;
-    background: radial-gradient(circle, rgba(249, 115, 22, 0.08) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(14, 165, 233, 0.08) 0%, transparent 70%);
     border-radius: 50%;
     transform: translate(30%, -30%);
 }
@@ -483,9 +483,9 @@ include __DIR__ . '/../includes/header.php';
 /* Notes */
 .record-notes-premium {
     padding: 1.15rem 1.35rem;
-    background: linear-gradient(135deg, #fff5ed 0%, #ffe8dc 100%);
+    background: linear-gradient(135deg, #f0f9ff 0%, #ffe8dc 100%);
     border-radius: 14px;
-    border: 1px solid rgba(249, 115, 22, 0.2);
+    border: 1px solid rgba(14, 165, 233, 0.2);
     position: relative;
     overflow: hidden;
 }
@@ -503,8 +503,8 @@ include __DIR__ . '/../includes/header.php';
 }
 
 :root[data-theme="dark"] .record-notes-premium {
-    background: linear-gradient(135deg, #2a1a0f 0%, #3a1a0f 100%);
-    border-color: rgba(249, 115, 22, 0.3);
+    background: linear-gradient(135deg, #0c2a3d 0%, #3a1a0f 100%);
+    border-color: rgba(14, 165, 233, 0.3);
 }
 
 .record-notes-label {
@@ -590,7 +590,7 @@ include __DIR__ . '/../includes/header.php';
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(249, 115, 22, 0.03) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(14, 165, 233, 0.03) 0%, transparent 70%);
     animation: rotate 20s linear infinite;
 }
 
@@ -603,20 +603,20 @@ include __DIR__ . '/../includes/header.php';
     width: 110px;
     height: 110px;
     border-radius: 30px;
-    background: linear-gradient(135deg, #fff5ed 0%, #ffe8dc 100%);
+    background: linear-gradient(135deg, #f0f9ff 0%, #ffe8dc 100%);
     color: var(--primary);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 3rem;
     margin: 0 auto 1.5rem;
-    box-shadow: 0 12px 30px rgba(249, 115, 22, 0.2);
+    box-shadow: 0 12px 30px rgba(14, 165, 233, 0.2);
     position: relative;
     z-index: 1;
 }
 
 :root[data-theme="dark"] .empty-records-icon-premium {
-    background: linear-gradient(135deg, #2a1a0f 0%, #3a1a0f 100%);
+    background: linear-gradient(135deg, #0c2a3d 0%, #3a1a0f 100%);
 }
 
 .empty-records-premium h3 {

@@ -59,9 +59,9 @@ include __DIR__ . '/../includes/header.php';
     <div class="metric-card" style="background: var(--surface); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.35rem;">
         <div class="metric-info">
             <p style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; text-transform: uppercase; margin-bottom: 0.35rem;">Total Booked</p>
-            <h3 style="color: #F97316; font-size: 1.8rem; font-weight: 800; margin: 0;"><?php echo $totalAppts; ?></h3>
+            <h3 style="color: #0ea5e9; font-size: 1.8rem; font-weight: 800; margin: 0;"><?php echo $totalAppts; ?></h3>
         </div>
-        <div class="metric-icon" style="background: rgba(249, 115, 22, 0.15); color: #F97316; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+        <div class="metric-icon" style="background: rgba(14, 165, 233, 0.15); color: #0ea5e9; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
             <i class="fa-solid fa-calendar-check"></i>
         </div>
     </div>
@@ -103,7 +103,7 @@ include __DIR__ . '/../includes/header.php';
     <div style="padding: 1.75rem 2rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
         <div>
             <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem; color: var(--text-dark); display: flex; align-items: center; gap: 0.5rem;">
-                <i class="fa-solid fa-chart-line" style="color: #F97316;"></i> Service Utilization Distribution
+                <i class="fa-solid fa-chart-line" style="color: #0ea5e9;"></i> Service Utilization Distribution
             </h3>
             <p style="color: var(--text-muted); margin: 0; font-size: 0.88rem;">Popularity and appointment volume per clinic service</p>
         </div>
@@ -126,11 +126,11 @@ include __DIR__ . '/../includes/header.php';
                         <tr>
                             <td><strong style="color: var(--text-dark); font-size: 0.95rem;"><?php echo sanitize($ss['service_name']); ?></strong></td>
                             <td><span style="color: var(--text-muted);"><?php echo (int)($ss['duration_minutes'] ?: 30); ?> mins</span></td>
-                            <td><strong style="color: #F97316; font-size: 0.95rem;"><?php echo $ss['total_booked']; ?></strong> visits</td>
+                            <td><strong style="color: #0ea5e9; font-size: 0.95rem;"><?php echo $ss['total_booked']; ?></strong> visits</td>
                             <td style="min-width: 200px;">
                                 <div style="display:flex; align-items:center; gap:0.75rem;">
                                     <div style="flex:1; background: var(--bg-body); border: 1px solid var(--border-color); height: 10px; border-radius: 999px; overflow: hidden;">
-                                        <div style="width:<?php echo $pct; ?>%; background: #F97316; height:100%; border-radius: 999px;"></div>
+                                        <div style="width:<?php echo $pct; ?>%; background: #0ea5e9; height:100%; border-radius: 999px;"></div>
                                     </div>
                                     <span style="font-size: 0.82rem; font-weight: 800; color: var(--text-dark); min-width: 45px; text-align: right;"><?php echo $pct; ?>%</span>
                                 </div>

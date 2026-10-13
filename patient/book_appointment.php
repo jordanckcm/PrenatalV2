@@ -140,9 +140,9 @@ include __DIR__ . '/../includes/header.php';
 }
 
 .slot-btn.available:hover {
-    border-color: #f97316;
+    border-color: #0ea5e9;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.15);
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.15);
 }
 
 /* FULL */
@@ -193,11 +193,11 @@ include __DIR__ . '/../includes/header.php';
 
 /* SELECTED */
 .slot-btn.selected-slot {
-    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%) !important;
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;
     color: #ffffff !important;
-    border-color: #f97316 !important;
+    border-color: #0ea5e9 !important;
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(249, 115, 22, 0.4);
+    box-shadow: 0 6px 16px rgba(14, 165, 233, 0.4);
 }
 
 .slot-btn.selected-slot .slot-time {
@@ -205,7 +205,7 @@ include __DIR__ . '/../includes/header.php';
 }
 
 .slot-btn.selected-slot .slot-status {
-    color: #fff5ed !important;
+    color: #f0f9ff !important;
 }
 
 /* Grid */
@@ -314,8 +314,8 @@ include __DIR__ . '/../includes/header.php';
                 padding: 0.75rem 0.5rem;
                 border-radius: 12px;
                 text-align: center;
-                background: <?php echo $isSelected ? '#fff5ed' : 'var(--surface)'; ?>;
-                border: 2px solid <?php echo $isSelected ? '#f97316' : 'var(--border-color)'; ?>;
+                background: <?php echo $isSelected ? '#f0f9ff' : 'var(--surface)'; ?>;
+                border: 2px solid <?php echo $isSelected ? '#0ea5e9' : 'var(--border-color)'; ?>;
                 cursor: pointer;
                 transition: all 0.2s;
                 opacity: <?php echo $isOpen ? '1' : '0.5'; ?>;
@@ -323,7 +323,7 @@ include __DIR__ . '/../includes/header.php';
                 <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">
                     <?php echo strtoupper($dayName); ?>
                 </div>
-                <div class="qp-day-num" style="font-size: 1.5rem; font-weight: 800; color: <?php echo $isSelected ? '#f97316' : 'var(--text-dark)'; ?>; margin: 0.25rem 0; font-family: 'Bricolage Grotesque', sans-serif;">
+                <div class="qp-day-num" style="font-size: 1.5rem; font-weight: 800; color: <?php echo $isSelected ? '#0ea5e9' : 'var(--text-dark)'; ?>; margin: 0.25rem 0; font-family: 'Bricolage Grotesque', sans-serif;">
                     <?php echo $dayNum; ?>
                 </div>
                 <div style="font-size: 0.7rem; font-weight: 700; color: <?php echo $isOpen ? '#10b981' : '#dc3545'; ?>;">
@@ -382,11 +382,11 @@ include __DIR__ . '/../includes/header.php';
 
         <input type="hidden" name="appointment_time" id="selected_slot" required>
 
-        <div id="selectedSlotPreview" style="display:none; padding:1rem; background:linear-gradient(135deg, #fff5ed 0%, #ffe8dc 100%); border:2px solid #f97316; border-radius:12px; margin-bottom: 1.25rem; align-items: center; gap:0.75rem;">
-            <i class="fa-solid fa-check-circle" style="color:#f97316; font-size:1.5rem;"></i>
+        <div id="selectedSlotPreview" style="display:none; padding:1rem; background:linear-gradient(135deg, #f0f9ff 0%, #ffe8dc 100%); border:2px solid #0ea5e9; border-radius:12px; margin-bottom: 1.25rem; align-items: center; gap:0.75rem;">
+            <i class="fa-solid fa-check-circle" style="color:#0ea5e9; font-size:1.5rem;"></i>
             <div>
                 <small style="color:#9ca3af; font-weight:700; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.5px;">Selected Slot</small>
-                <div style="font-size:1.1rem; font-weight:800; color:#ea580c;" id="selectedSlotText">—</div>
+                <div style="font-size:1.1rem; font-weight:800; color:#0284c7;" id="selectedSlotText">—</div>
             </div>
         </div>
 
@@ -532,9 +532,9 @@ document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('.quick-pick-date').forEach(el => {
             const dayNumEl = el.querySelector('.qp-day-num');
             if (el.dataset.date === dateStr) {
-                el.style.background = '#fff5ed';
-                el.style.borderColor = '#f97316';
-                if (dayNumEl) dayNumEl.style.color = '#f97316';
+                el.style.background = '#f0f9ff';
+                el.style.borderColor = '#0ea5e9';
+                if (dayNumEl) dayNumEl.style.color = '#0ea5e9';
             } else {
                 el.style.background = 'var(--surface)';
                 el.style.borderColor = 'var(--border-color)';
@@ -551,9 +551,9 @@ document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('.quick-pick-date').forEach(el => {
             const dayNumEl = el.querySelector('.qp-day-num');
             if (el.dataset.date === dateStr) {
-                el.style.background = '#fff5ed';
-                el.style.borderColor = '#f97316';
-                if (dayNumEl) dayNumEl.style.color = '#f97316';
+                el.style.background = '#f0f9ff';
+                el.style.borderColor = '#0ea5e9';
+                if (dayNumEl) dayNumEl.style.color = '#0ea5e9';
             } else {
                 el.style.background = 'var(--surface)';
                 el.style.borderColor = 'var(--border-color)';

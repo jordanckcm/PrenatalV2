@@ -109,9 +109,9 @@ include __DIR__ . '/header.php';
                     $icon = $iconMap[$notif['type']] ?? 'fa-bell';
                     $href = !empty($notif['link']) ? BASE_URL . ltrim($notif['link'], '/') : '';
                 ?>
-                <div class="notif-card" data-id="<?php echo (int)$notif['id']; ?>" style="background: <?php echo $isUnread ? 'rgba(249, 115, 22, 0.04)' : 'var(--bg-body)'; ?>; padding: 1.25rem 1.5rem; border-radius: var(--radius-sm); border: 1px solid <?php echo $isUnread ? 'rgba(249, 115, 22, 0.3)' : 'var(--border-color)'; ?>; border-left: 4px solid <?php echo $isUnread ? 'var(--primary)' : 'var(--border-color)'; ?>; display: flex; gap: 1.25rem; align-items: flex-start; justify-content: space-between;">
+                <div class="notif-card" data-id="<?php echo (int)$notif['id']; ?>" style="background: <?php echo $isUnread ? 'rgba(14, 165, 233, 0.04)' : 'var(--bg-body)'; ?>; padding: 1.25rem 1.5rem; border-radius: var(--radius-sm); border: 1px solid <?php echo $isUnread ? 'rgba(14, 165, 233, 0.3)' : 'var(--border-color)'; ?>; border-left: 4px solid <?php echo $isUnread ? 'var(--primary)' : 'var(--border-color)'; ?>; display: flex; gap: 1.25rem; align-items: flex-start; justify-content: space-between;">
                     <div style="display: flex; gap: 1.25rem; align-items: flex-start; flex: 1; min-width:0;">
-                        <div style="width: 42px; height: 42px; border-radius: 50%; background: <?php echo $isUnread ? 'rgba(249, 115, 22, 0.15)' : 'var(--surface)'; ?>; color: <?php echo $isUnread ? 'var(--primary)' : 'var(--text-muted)'; ?>; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
+                        <div style="width: 42px; height: 42px; border-radius: 50%; background: <?php echo $isUnread ? 'rgba(14, 165, 233, 0.15)' : 'var(--surface)'; ?>; color: <?php echo $isUnread ? 'var(--primary)' : 'var(--text-muted)'; ?>; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
                             <i class="fa-solid <?php echo $icon; ?>"></i>
                         </div>
                         <div style="flex: 1; min-width:0;">

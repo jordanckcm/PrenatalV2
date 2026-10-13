@@ -183,7 +183,7 @@ include __DIR__ . '/../includes/header.php';
                 <?php endif; ?>
 
                 <?php if (!empty($record['next_visit_date'])): ?>
-                    <div style="margin-top:0.75rem; padding:0.75rem 1rem; background:#fff5ed; border-radius:8px; display:inline-flex; align-items:center; gap:0.5rem;">
+                    <div style="margin-top:0.75rem; padding:0.75rem 1rem; background:#f0f9ff; border-radius:8px; display:inline-flex; align-items:center; gap:0.5rem;">
                         <i class="fa-solid fa-calendar-check text-primary"></i>
                         <span style="font-size:0.85rem; font-weight:700;">
                             Next Visit: <?php echo formatDate($record['next_visit_date']); ?>

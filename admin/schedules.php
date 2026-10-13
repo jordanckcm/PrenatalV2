@@ -104,15 +104,15 @@ include __DIR__ . '/../includes/header.php';
                 padding: 0.75rem 0.5rem;
                 border-radius: 12px;
                 text-align: center;
-                background: <?php echo $isSelected ? '#fff5ed' : 'var(--surface)'; ?>;
-                border: 2px solid <?php echo $isSelected ? '#f97316' : 'var(--border-color)'; ?>;
+                background: <?php echo $isSelected ? '#f0f9ff' : 'var(--surface)'; ?>;
+                border: 2px solid <?php echo $isSelected ? '#0ea5e9' : 'var(--border-color)'; ?>;
                 cursor: pointer;
                 opacity: <?php echo $isOpen ? '1' : '0.5'; ?>;
             " onclick="selectDate('<?php echo $dateStr; ?>')">
                 <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">
                     <?php echo strtoupper($dayName); ?>
                 </div>
-                <div style="font-size: 1.5rem; font-weight: 800; color: <?php echo $isSelected ? '#f97316' : 'var(--text-dark)'; ?>; margin: 0.25rem 0;">
+                <div style="font-size: 1.5rem; font-weight: 800; color: <?php echo $isSelected ? '#0ea5e9' : 'var(--text-dark)'; ?>; margin: 0.25rem 0;">
                     <?php echo $dayNum; ?>
                 </div>
                 <div style="font-size: 0.7rem; font-weight: 700; color: <?php echo $isOpen ? '#10b981' : '#dc3545'; ?>;">
@@ -226,8 +226,8 @@ function selectDate(dateStr) {
     
     document.querySelectorAll('.quick-pick-date').forEach(el => {
         if (el.dataset.date === dateStr) {
-            el.style.background = '#fff5ed';
-            el.style.borderColor = '#f97316';
+            el.style.background = '#f0f9ff';
+            el.style.borderColor = '#0ea5e9';
         } else {
             el.style.background = 'var(--surface)';
             el.style.borderColor = 'var(--border-color)';

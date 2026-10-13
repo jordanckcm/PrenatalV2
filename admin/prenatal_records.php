@@ -123,9 +123,9 @@ include __DIR__ . '/../includes/header.php';
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 }
 
-.admin-stat-card.blue::before { background: linear-gradient(180deg, #0d6efd, #0a58ca); }
+.admin-stat-card.blue::before { background: linear-gradient(180deg, #6366f1, #4f46e5); }
 .admin-stat-card.green::before { background: linear-gradient(180deg, #10b981, #059669); }
-.admin-stat-card.orange::before { background: linear-gradient(180deg, #f97316, #ea580c); }
+.admin-stat-card.orange::before { background: linear-gradient(180deg, #0ea5e9, #0284c7); }
 
 .admin-stat-icon {
     width: 48px;
@@ -139,9 +139,9 @@ include __DIR__ . '/../includes/header.php';
     flex-shrink: 0;
 }
 
-.admin-stat-card.blue .admin-stat-icon { background: linear-gradient(135deg, #0d6efd, #0a58ca); box-shadow: 0 6px 16px rgba(13, 110, 253, 0.3); }
+.admin-stat-card.blue .admin-stat-icon { background: linear-gradient(135deg, #6366f1, #4f46e5); box-shadow: 0 6px 16px rgba(99, 102, 241, 0.3); }
 .admin-stat-card.green .admin-stat-icon { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3); }
-.admin-stat-card.orange .admin-stat-icon { background: linear-gradient(135deg, #f97316, #ea580c); box-shadow: 0 6px 16px rgba(249, 115, 22, 0.3); }
+.admin-stat-card.orange .admin-stat-icon { background: linear-gradient(135deg, #0ea5e9, #0284c7); box-shadow: 0 6px 16px rgba(14, 165, 233, 0.3); }
 
 .admin-stat-value {
     font-family: 'Bricolage Grotesque', sans-serif;
@@ -190,7 +190,7 @@ include __DIR__ . '/../includes/header.php';
 .filter-bar input:focus,
 .filter-bar select:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
 }
 
 /* Records List */
@@ -218,7 +218,7 @@ include __DIR__ . '/../includes/header.php';
     justify-content: space-between;
     align-items: center;
     padding: 1.15rem 1.5rem;
-    background: linear-gradient(135deg, rgba(249, 115, 22, 0.05) 0%, var(--surface) 100%);
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.05) 0%, var(--surface) 100%);
     border-bottom: 1px solid var(--border-color);
     flex-wrap: wrap;
     gap: 1rem;
@@ -325,14 +325,14 @@ include __DIR__ . '/../includes/header.php';
 
 .record-notes {
     padding: 0.85rem 1rem;
-    background: linear-gradient(135deg, #fff5ed 0%, #ffe8dc 100%);
+    background: linear-gradient(135deg, #f0f9ff 0%, #ffe8dc 100%);
     border-left: 4px solid var(--primary);
     border-radius: 10px;
     margin-top: 0.5rem;
 }
 
 :root[data-theme="dark"] .record-notes {
-    background: linear-gradient(135deg, #2a1a0f 0%, #3a1a0f 100%);
+    background: linear-gradient(135deg, #0c2a3d 0%, #3a1a0f 100%);
 }
 
 .record-notes-label {
@@ -978,8 +978,8 @@ function printRecord(recordId) {
         '<style>' +
         '* { box-sizing: border-box; }' +
         'body { font-family: Arial, sans-serif; padding: 2rem; color: #1a1a1a; background: #fff; }' +
-        '.print-header { text-align: center; padding-bottom: 1rem; border-bottom: 3px solid #f97316; margin-bottom: 1.5rem; }' +
-        '.print-header h1 { margin: 0 0 0.25rem 0; color: #f97316; font-size: 1.5rem; }' +
+        '.print-header { text-align: center; padding-bottom: 1rem; border-bottom: 3px solid #0ea5e9; margin-bottom: 1.5rem; }' +
+        '.print-header h1 { margin: 0 0 0.25rem 0; color: #0ea5e9; font-size: 1.5rem; }' +
         '.print-header p { margin: 0; color: #666; font-size: 0.85rem; }' +
         '.record-patient-info { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }' +
         '.patient-avatar { width: 50px; height: 50px; border-radius: 12px; background: #0ea5e9; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: 800; }' +
@@ -992,8 +992,8 @@ function printRecord(recordId) {
         '.record-data-item { border: 1px solid #e5e7eb; border-radius: 8px; padding: 0.6rem 0.75rem; background: #f9fafb; }' +
         '.record-data-label { font-size: 0.65rem; text-transform: uppercase; color: #888; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 0.25rem; }' +
         '.record-data-value { font-size: 0.95rem; font-weight: 800; color: #1a1a1a; }' +
-        '.record-notes { border-left: 4px solid #f97316; background: #fff5ed; padding: 0.75rem 1rem; border-radius: 8px; margin-top: 1rem; }' +
-        '.record-notes-label { font-size: 0.7rem; text-transform: uppercase; color: #ea580c; font-weight: 800; margin-bottom: 0.4rem; }' +
+        '.record-notes { border-left: 4px solid #0ea5e9; background: #f0f9ff; padding: 0.75rem 1rem; border-radius: 8px; margin-top: 1rem; }' +
+        '.record-notes-label { font-size: 0.7rem; text-transform: uppercase; color: #0284c7; font-weight: 800; margin-bottom: 0.4rem; }' +
         '.record-notes-text { font-size: 0.88rem; line-height: 1.5; color: #1a1a1a; }' +
         '.print-footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #eee; text-align: center; font-size: 0.72rem; color: #888; }' +
         '.badge { display: inline-block; padding: 0.3rem 0.7rem; border-radius: 20px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }' +

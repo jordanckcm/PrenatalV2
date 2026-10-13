@@ -3,9 +3,9 @@
    ============================================ */
 
 :root {
-    --primary: #f97316;
-    --primary-dark: #ea580c;
-    --primary-light: #fff5ed;
+    --primary: #0ea5e9;
+    --primary-dark: #0284c7;
+    --primary-light: #f0f9ff;
     --success: #10b981;
     --warning: #f59e0b;
     --danger: #dc3545;
@@ -13,9 +13,9 @@
 
     --bg-body: #f8fafc;
     --surface: #ffffff;
-    --text-dark: #1a1a1a;
-    --text-muted: #6b7280;
-    --border-color: #e5e7eb;
+    --text-dark: #0f172a;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
 
     --radius-sm: 8px;
     --radius-md: 12px;
@@ -31,9 +31,9 @@
 
 /* ---------- DARK THEME ---------- */
 :root[data-theme="dark"] {
-    --primary: #f97316;
-    --primary-dark: #ea580c;
-    --primary-light: #2a1a0f;
+    --primary: #0ea5e9;
+    --primary-dark: #0284c7;
+    --primary-light: #0c2a3d;
     --success: #10b981;
     --warning: #f59e0b;
     --danger: #dc3545;
@@ -415,7 +415,7 @@ body.sidebar-closed .main-content { margin-left: 0; }
 
 .form-control:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
 }
 
 .form-control::placeholder { color: var(--text-muted); }
@@ -439,12 +439,12 @@ body.sidebar-closed .main-content { margin-left: 0; }
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
     color: #fff;
-    box-shadow: 0 2px 8px rgba(249, 115, 22, 0.25);
+    box-shadow: 0 2px 8px rgba(14, 165, 233, 0.25);
 }
 
-.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(249, 115, 22, 0.35); }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35); }
 
 .btn-outline {
     background: transparent;
