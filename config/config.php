@@ -162,6 +162,22 @@ function calculateGestationalAgeWeeks($lmpDateStr, $targetDateStr = 'now') {
     return floor($days / 7);
 }
 
+// A staff member is BUSY while they hold another open (pending/confirmed) appointment on the
+// same date: one staff = one patient at a time, never several. Completed, cancelled and
+// missed appointments free the staff member again.
+// Returns [staff_id => appointment_code] for every busy staff member.
+function getBusyStaffMap($db, $date, $excludeAppointmentId = 0) {
+    $stmt = $db->prepare("SELECT healthcare_worker_id, appointment_code FROM appointments
+                          WHERE appointment_date = ? AND healthcare_worker_id IS NOT NULL
+                            AND status IN ('pending','confirmed') AND id != ?");
+    $stmt->execute([$date, (int)$excludeAppointmentId]);
+    $map = [];
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
+        $map[(int)$r['healthcare_worker_id']] = $r['appointment_code'];
+    }
+    return $map;
+}
+
 // Current User Accessors
 function isLoggedIn() {
     return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
@@ -200,7 +216,7 @@ function ensureSchemaUpgrades() {
     // examination that doesn't populate one of them throws a 1048 "cannot be null"
     // integrity-constraint error. Every column examine-patient.php can leave empty
     // is now force-relaxed to nullable below, not just added if missing.
-    $marker = APP_VERSION . '-schema-8';
+    $marker = APP_VERSION . '-schema-10';
     if (($_SESSION['schema_ok'] ?? '') === $marker) return;
 
     try {
@@ -214,7 +230,9 @@ function ensureSchemaUpgrades() {
         };
         $add = function ($table, $column, $definition) use ($db, $hasColumn) {
             if (!$hasColumn($table, $column)) {
-                $db->exec("ALTER TABLE `$table` ADD COLUMN `$column` $definition");
+                // Each column is added on its own: one failing ALTER must not stop the rest
+                // (previously a single failure silently skipped every later column).
+                try { $db->exec("ALTER TABLE `$table` ADD COLUMN `$column` $definition"); } catch (Exception $e) {}
             }
         };
         // Forces an existing column to allow NULL, keeping its current type/size but
@@ -227,9 +245,30 @@ function ensureSchemaUpgrades() {
             ");
             $isNullable->execute([$table, $column]);
             if ($isNullable->fetchColumn() === 'NO') {
-                $db->exec("ALTER TABLE `$table` MODIFY COLUMN `$column` $nullableDefinition");
+                try { $db->exec("ALTER TABLE `$table` MODIFY COLUMN `$column` $nullableDefinition"); } catch (Exception $e) {}
             }
         };
+
+        // Services: the admin Services page edits an examination form per service and
+        // stamps updated_at; older database.sql installs never had these columns, which
+        // made Add / Edit throw "Column not found".
+        if ($db->query("SHOW TABLES LIKE 'services'")->rowCount() > 0) {
+            $add('services', 'form_fields', 'LONGTEXT DEFAULT NULL');
+            $add('services', 'max_daily_slots', 'INT NOT NULL DEFAULT 15');
+            $add('services', 'updated_at', 'TIMESTAMP NULL DEFAULT NULL');
+        }
+
+        // Doctors directory (admin/doctors.php) - the table was never in database.sql
+        $db->exec("CREATE TABLE IF NOT EXISTS `doctors` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `full_name` VARCHAR(100) NOT NULL,
+            `specialization` VARCHAR(100) DEFAULT NULL,
+            `license_no` VARCHAR(50) DEFAULT NULL,
+            `phone` VARCHAR(20) DEFAULT NULL,
+            `email` VARCHAR(100) DEFAULT NULL,
+            `status` VARCHAR(20) NOT NULL DEFAULT 'active',
+            `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
         $add('users', 'address', 'TEXT DEFAULT NULL');
         $add('users', 'avatar', 'VARCHAR(255) DEFAULT NULL');
@@ -260,6 +299,19 @@ function ensureSchemaUpgrades() {
         $add('prenatal_records', 'vitamins_prescribed', 'VARCHAR(255) DEFAULT NULL');
         $add('prenatal_records', 'iron_folic_given', 'VARCHAR(255) DEFAULT NULL');
         $add('prenatal_records', 'tetanus_vaccine_given', 'VARCHAR(100) DEFAULT NULL');
+
+        // Older database.sql made iron_folic_given TINYINT(1) and tetanus_vaccine_given VARCHAR(50);
+        // the Examine form sends text such as "1 tablet daily", which those types reject.
+        try {
+            $ct = $db->query("SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'prenatal_records' AND COLUMN_NAME IN ('iron_folic_given','tetanus_vaccine_given','vitamins_prescribed')")->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($ct as $c) {
+                if ($c['COLUMN_NAME'] === 'iron_folic_given' && strtolower($c['DATA_TYPE']) === 'tinyint') {
+                    $db->exec("ALTER TABLE prenatal_records MODIFY COLUMN `iron_folic_given` VARCHAR(255) DEFAULT NULL");
+                } elseif ($c['COLUMN_NAME'] === 'tetanus_vaccine_given' && (int)$c['CHARACTER_MAXIMUM_LENGTH'] < 100) {
+                    $db->exec("ALTER TABLE prenatal_records MODIFY COLUMN `tetanus_vaccine_given` VARCHAR(100) DEFAULT NULL");
+                }
+            }
+        } catch (Exception $e) {}
 
         // Every prenatal_records column that examine-patient.php may submit as empty
         // depending on service type. Column type/size below matches what $add() uses

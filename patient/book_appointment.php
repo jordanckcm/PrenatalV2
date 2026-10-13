@@ -72,6 +72,16 @@ try {
 
                         logAudit('APPOINTMENT_BOOKED', "Patient booked appointment $appointmentCode");
 
+                        // Tell every admin there is a new booking waiting to be confirmed & assigned
+                        notifyAdmins(
+                            'New Booking Request',
+                            getCurrentUserName() . " booked appointment $appointmentCode for " .
+                                date('M d, Y', strtotime($appointmentDate)) . ' at ' . date('g:i A', strtotime($appointmentTime)) .
+                                '. Please confirm and assign a staff member.',
+                            'appointment',
+                            'admin/appointments.php?status=pending'
+                        );
+
                         header("Location: my_appointments.php?success=" . urlencode("Appointment booked successfully! Code: $appointmentCode"));
                         exit;
                     }
@@ -145,6 +155,23 @@ include __DIR__ . '/../includes/header.php';
 
 .slot-btn.full .slot-status {
     color: #b45309;
+}
+
+/* PAST (start time already gone today) */
+.slot-btn.past {
+    opacity: 0.45;
+    cursor: not-allowed;
+    background: #e5e7eb;
+    border-color: #d1d5db;
+}
+
+.slot-btn.past .slot-time {
+    color: #6b7280;
+    text-decoration: line-through;
+}
+
+.slot-btn.past .slot-status {
+    color: #6b7280;
 }
 
 /* BLOCKED */
@@ -389,8 +416,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // ============================================
     // LOAD SLOTS
     // ============================================
-    async function loadSlots() {
+    async function loadSlots(silent) {
         const date = dateInput.value;
+        const keepTime = silent === true ? selectedSlotInput.value : '';
         selectedSlotInput.value = '';
         selectedSlotPreview.style.display = 'none';
         submitBtn.disabled = true;
@@ -400,7 +428,9 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        slotContainer.innerHTML = '<p class="text-muted" style="grid-column: 1 / -1;"><i class="fa-solid fa-spinner fa-spin"></i> Loading slots...</p>';
+        if (silent !== true) {
+            slotContainer.innerHTML = '<p class="text-muted" style="grid-column: 1 / -1;"><i class="fa-solid fa-spinner fa-spin"></i> Loading slots...</p>';
+        }
 
         try {
             const res = await fetch(`<?php echo BASE_URL; ?>api/get_slots.php?date=${date}`);
@@ -426,7 +456,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 let state = 'available';
                 let statusText = slot.available + (slot.available === 1 ? ' left' : ' left');
 
-                if (slot.is_blocked) {
+                if (slot.is_past) {
+                    state = 'past';
+                    statusText = 'Passed';
+                } else if (slot.is_blocked) {
                     state = 'blocked';
                     statusText = 'Blocked';
                 } else if (slot.is_full || slot.available <= 0) {
@@ -435,6 +468,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 btn.className = 'slot-btn ' + state;
+                btn.dataset.time = slot.time;
 
                 // Time label
                 const timeLabel = document.createElement('div');
@@ -472,6 +506,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 slotContainer.appendChild(btn);
+                if (keepTime && keepTime === slot.time && state === 'available') {
+                    btn.click();
+                }
             });
 
         } catch (e) {
@@ -479,6 +516,11 @@ document.addEventListener('DOMContentLoaded', function () {
             slotContainer.innerHTML = '<p class="text-danger" style="grid-column: 1 / -1;">Network error. Please try again.</p>';
         }
     }
+
+    // Re-check every minute so slots that just passed become unclickable
+    setInterval(function () {
+        if (dateInput.value) loadSlots(true);
+    }, 60000);
 
     // ============================================
     // SELECT DATE (Quick-Pick)

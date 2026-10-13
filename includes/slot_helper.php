@@ -3,6 +3,20 @@
  * Slot Helper Functions
  */
 
+// Marker stored in slot_overrides.reason: a regular (weekly-schedule) slot the admin moved or deleted
+// for one date. Without it the original slot is regenerated from the weekly schedule and the
+// edit appears to "go back" (e.g. to 8:00 AM).
+const SLOT_REMOVED_MARKER = '__removed__';
+
+// Accepts 8:5, 08:05 or 08:05:00 and returns HH:MM:SS (or null when invalid)
+function normalizeTimeValue($t) {
+    $t = trim((string)$t);
+    if (!preg_match('/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/', $t, $m)) return null;
+    $h = (int)$m[1]; $i = (int)$m[2]; $sec = isset($m[3]) ? (int)$m[3] : 0;
+    if ($h > 23 || $i > 59 || $sec > 59) return null;
+    return sprintf('%02d:%02d:%02d', $h, $i, $sec);
+}
+
 function generateTimeSlots($startTime, $endTime, $intervalMinutes = 30) {
     $slots = [];
     $start = strtotime($startTime);
@@ -18,7 +32,7 @@ function generateTimeSlots($startTime, $endTime, $intervalMinutes = 30) {
 
 function getClinicWeeklySchedule($db) {
     try {
-        $stmt = $db->query("SELECT * FROM schedules ORDER BY FIELD(day_of_week, 'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday')");
+        $stmt = $db->query("SELECT * FROM schedules ORDER BY FIELD(day_of_week, 'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'), (staff_id IS NULL) ASC, id ASC");
         return $stmt->fetchAll();
     } catch (Exception $e) {
         return [];
@@ -47,7 +61,7 @@ function ensureSlotOverridesTable($db) {
 function getSlotsForDate($db, $date) {
     $dayOfWeek = date('l', strtotime($date));
 
-    $stmt = $db->prepare("SELECT * FROM schedules WHERE day_of_week = ? AND is_active = 1");
+    $stmt = $db->prepare("SELECT * FROM schedules WHERE day_of_week = ? AND is_active = 1 ORDER BY (staff_id IS NULL) DESC, id DESC LIMIT 1");
     $stmt->execute([$dayOfWeek]);
     $schedule = $stmt->fetch();
 
@@ -71,6 +85,9 @@ function getSlotsForDate($db, $date) {
 
             if (isset($overrideMap[$slot])) {
                 $o = $overrideMap[$slot];
+                if ($o['is_blocked'] && ($o['reason'] ?? '') === SLOT_REMOVED_MARKER) {
+                    continue; // moved or deleted by the admin for this date
+                }
                 if ($o['is_blocked']) {
                     $isBlocked = true;
                 } else {

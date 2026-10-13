@@ -48,13 +48,12 @@ try {
             exit;
         }
 
-    // Busy staff cannot be assigned: another pending/confirmed booking at the same date + time
-    $busy = $db->prepare("SELECT appointment_code FROM appointments WHERE healthcare_worker_id = ? AND appointment_date = (SELECT appointment_date FROM appointments WHERE id = ?) AND appointment_time = (SELECT appointment_time FROM appointments WHERE id = ?) AND status IN ('pending','confirmed') AND id != ? LIMIT 1");
-    $busy->execute([$staffId, $appointmentId, $appointmentId, $appointmentId]);
-    if ($busyCode = $busy->fetchColumn()) {
-        echo json_encode(['success' => false, 'message' => 'This staff member is busy at that time (already assigned to ' . $busyCode . '). Please choose a vacant staff member.']);
-        exit;
-    }
+        // One staff = one patient: a busy staff member cannot take another appointment that day
+        $busyMap = getBusyStaffMap($db, $apptRow['appointment_date'], $appointmentId);
+        if (isset($busyMap[$staffId])) {
+            echo json_encode(['success' => false, 'message' => 'This staff member is busy (already assigned to ' . $busyMap[$staffId] . '). Please choose a vacant staff member.']);
+            exit;
+        }
         $stmt = $db->prepare("UPDATE appointments SET status = ?, healthcare_worker_id = ?, updated_at = NOW() WHERE id = ?");
         $stmt->execute([$status, $staffId, $appointmentId]);
     } else {

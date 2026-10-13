@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
         $serviceName = trim($_POST['service_name'] ?? '');
         $description = trim($_POST['description'] ?? '');
         $duration = (int)($_POST['duration_minutes'] ?? 30);
-        $maxDaily = (int)($_POST['max_daily_booking'] ?? 20);
+        $maxDaily = max(1, (int)($_POST['max_daily_booking'] ?? 15));
         $isActive = isset($_POST['is_active']) ? 1 : 0;
         $formFieldsJson = $_POST['form_fields_json'] ?? '[]';
 
@@ -100,10 +100,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
                 $stmt = $db->prepare("
                     UPDATE services 
                     SET service_name = ?, description = ?, duration_minutes = ?, 
-                        is_active = ?, form_fields = ?, updated_at = NOW()
+                        max_daily_slots = ?, is_active = ?, form_fields = ?, updated_at = NOW()
                     WHERE id = ?
                 ");
-                $stmt->execute([$serviceName, $description ?: null, $duration, $isActive, $formFieldsJson, $serviceId]);
+                $stmt->execute([$serviceName, $description ?: null, $duration, $maxDaily, $isActive, $formFieldsJson, $serviceId]);
 
                 logAudit('SERVICE_UPDATED', "Admin updated service ID $serviceId");
                 $successMsg = "Service updated successfully!";
@@ -125,6 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'add_s
         $serviceName = trim($_POST['service_name'] ?? '');
         $description = trim($_POST['description'] ?? '');
         $duration = (int)($_POST['duration_minutes'] ?? 30);
+        $maxDaily = max(1, (int)($_POST['max_daily_booking'] ?? 15));
         $isActive = 1;
 
         if ($serviceName === '') {
@@ -134,10 +135,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'add_s
                 $db = getDB();
                 $defaultForm = json_encode(getDefaultFormForService($serviceName, $defaultForms));
                 $stmt = $db->prepare("
-                    INSERT INTO services (service_name, description, duration_minutes, is_active, form_fields, created_at)
-                    VALUES (?, ?, ?, ?, ?, NOW())
+                    INSERT INTO services (service_name, description, duration_minutes, max_daily_slots, is_active, form_fields, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, NOW())
                 ");
-                $stmt->execute([$serviceName, $description ?: null, $duration, $isActive, $defaultForm]);
+                $stmt->execute([$serviceName, $description ?: null, $duration, $maxDaily, $isActive, $defaultForm]);
 
                 logAudit('SERVICE_CREATED', "Admin created service '$serviceName'");
                 $successMsg = "Service added successfully!";
@@ -168,12 +169,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'deact
 }
 
 // ============================================
+// HANDLE REACTIVATE SERVICE
+// ============================================
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'reactivate_service') {
+    $csrf = $_POST['csrf_token'] ?? '';
+    $serviceId = (int)($_POST['service_id'] ?? 0);
+    if (verifyCsrfToken($csrf) && $serviceId) {
+        try {
+            $db = getDB();
+            $stmt = $db->prepare("UPDATE services SET is_active = 1 WHERE id = ?");
+            $stmt->execute([$serviceId]);
+            logAudit('SERVICE_REACTIVATED', "Admin reactivated service ID $serviceId");
+            $successMsg = "Service reactivated successfully!";
+        } catch (Exception $e) {
+            $errorMsg = "Error: " . $e->getMessage();
+        }
+    }
+}
+
+// ============================================
 // KUHAON ANG TANAN SERVICES
 // ============================================
 try {
     $db = getDB();
     $stmt = $db->query("SELECT * FROM services ORDER BY is_active DESC, service_name ASC");
     $services = $stmt->fetchAll();
+    foreach ($services as &$svc) {
+        $ff = json_decode($svc['form_fields'] ?? '', true);
+        if (!is_array($ff) || count($ff) === 0) {
+            $svc['form_fields'] = json_encode(getDefaultFormForService($svc['service_name'], $defaultForms));
+        }
+        $svc['max_daily_booking'] = $svc['max_daily_slots'] ?? 15;
+    }
+    unset($svc);
 } catch (Exception $e) {
     die("Error: " . $e->getMessage());
 }
@@ -261,6 +289,12 @@ include __DIR__ . '/../includes/header.php';
                                         data-service-id="<?php echo (int)$s['id']; ?>"
                                         data-service-name="<?php echo htmlspecialchars($s['service_name'], ENT_QUOTES, 'UTF-8'); ?>">
                                         <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                <?php else: ?>
+                                    <button type="button" class="btn btn-outline btn-sm js-reactivate-service" style="color:var(--success, #16a34a);"
+                                        data-service-id="<?php echo (int)$s['id']; ?>"
+                                        data-service-name="<?php echo htmlspecialchars($s['service_name'], ENT_QUOTES, 'UTF-8'); ?>">
+                                        <i class="fa-solid fa-rotate-left"></i> Activate
                                     </button>
                                 <?php endif; ?>
                             </div>
@@ -381,14 +415,20 @@ include __DIR__ . '/../includes/header.php';
                     <textarea name="description" class="form-control" rows="2"></textarea>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">Duration (Minutes)</label>
-                    <input type="number" name="duration_minutes" class="form-control" min="5" max="300" value="30">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Duration (Minutes)</label>
+                        <input type="number" name="duration_minutes" class="form-control" min="5" max="300" value="30">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Max Daily Bookings</label>
+                        <input type="number" name="max_daily_booking" class="form-control" min="1" max="100" value="15">
+                    </div>
                 </div>
 
                 <div class="alert alert-info" style="font-size:0.8rem;">
                     <i class="fa-solid fa-info-circle"></i>
-                    <div>Pagkahuman ma-create, i-click ang "Edit" para ma-customize ang examination form fields.</div>
+                    <div>After creating, click "Edit" to customize the examination form fields.</div>
                 </div>
             </form>
         </div>
@@ -406,6 +446,13 @@ include __DIR__ . '/../includes/header.php';
     <input type="hidden" name="csrf_token" value="<?php echo getCsrfToken(); ?>">
     <input type="hidden" name="action" value="deactivate_service">
     <input type="hidden" name="service_id" id="deactivateServiceId">
+</form>
+
+<!-- Reactivate Form -->
+<form id="reactivateForm" method="POST" style="display:none;">
+    <input type="hidden" name="csrf_token" value="<?php echo getCsrfToken(); ?>">
+    <input type="hidden" name="action" value="reactivate_service">
+    <input type="hidden" name="service_id" id="reactivateServiceId">
 </form>
 
 <style>
@@ -470,6 +517,10 @@ include __DIR__ . '/../includes/header.php';
         }
     }
 
+    function esc(v) {
+        return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
     function renderFormFields() {
         var container = document.getElementById('formFieldsContainer');
         if (!container) return;
@@ -485,8 +536,8 @@ include __DIR__ . '/../includes/header.php';
             var row = document.createElement('div');
             row.className = 'form-field-row';
             row.innerHTML = 
-                '<input type="text" value="' + (field.label || '') + '" placeholder="Label" onchange="_updateField(' + index + ', \'label\', this.value)">' +
-                '<input type="text" value="' + (field.key || '') + '" placeholder="Key (e.g. weight_kg)" onchange="_updateField(' + index + ', \'key\', this.value)">' +
+                '<input type="text" value="' + esc(field.label) + '" placeholder="Label" onchange="_updateField(' + index + ', \'label\', this.value)">' +
+                '<input type="text" value="' + esc(field.key) + '" placeholder="Key (e.g. weight_kg)" onchange="_updateField(' + index + ', \'key\', this.value)">' +
                 '<select onchange="_updateField(' + index + ', \'type\', this.value)">' +
                     '<option value="text"' + (field.type === 'text' ? ' selected' : '') + '>Text</option>' +
                     '<option value="number"' + (field.type === 'number' ? ' selected' : '') + '>Number</option>' +
@@ -586,6 +637,16 @@ include __DIR__ . '/../includes/header.php';
             if (confirm('Deactivate "' + deactivateBtn.getAttribute('data-service-name') + '"?')) {
                 document.getElementById('deactivateServiceId').value = deactivateBtn.getAttribute('data-service-id');
                 document.getElementById('deactivateForm').submit();
+            }
+            return;
+        }
+
+        var reactivateBtn = e.target.closest('.js-reactivate-service');
+        if (reactivateBtn) {
+            e.preventDefault();
+            if (confirm('Activate "' + reactivateBtn.getAttribute('data-service-name') + '" again?')) {
+                document.getElementById('reactivateServiceId').value = reactivateBtn.getAttribute('data-service-id');
+                document.getElementById('reactivateForm').submit();
             }
             return;
         }

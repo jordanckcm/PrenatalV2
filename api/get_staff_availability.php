@@ -14,7 +14,7 @@ $date = $_GET['date'] ?? '';
 $time = $_GET['time'] ?? '';
 $appointmentId = (int)($_GET['appointment_id'] ?? 0);
 
-if (!$date || !$time) {
+if (!$date) {
     echo json_encode(['success' => false, 'message' => 'Missing date or time']);
     exit;
 }
@@ -26,19 +26,18 @@ try {
     $stmt->execute();
     $staffList = $stmt->fetchAll();
 
-    $stmt = $db->prepare("SELECT healthcare_worker_id FROM appointments WHERE appointment_date = ? AND appointment_time = ? AND status IN ('pending','confirmed') AND healthcare_worker_id IS NOT NULL AND id != ?");
-    $stmt->execute([$date, $time, $appointmentId]);
-    $busyStaff = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    $busyMap = getBusyStaffMap($db, $date, $appointmentId);
+    $busyStaff = array_keys($busyMap);
 
     $roster = [];
     foreach ($staffList as $s) {
-        $isVacant = !in_array($s['staff_id'], $busyStaff);
+        $isVacant = !in_array((int)$s['staff_id'], $busyStaff, true);
         $roster[] = [
             'staff_id' => (int)$s['staff_id'],
             'full_name' => $s['full_name'],
             'is_vacant' => $isVacant,
             'is_on_duty' => true,
-            'status_text' => $isVacant ? 'Available' : 'Busy'
+            'status_text' => $isVacant ? 'Available' : 'Busy (' . $busyMap[(int)$s['staff_id']] . ')'
         ];
     }
 

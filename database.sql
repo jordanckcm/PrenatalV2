@@ -60,7 +60,23 @@ CREATE TABLE IF NOT EXISTS `services` (
     `description` TEXT DEFAULT NULL,
     `duration_minutes` INT NOT NULL DEFAULT 30,
     `max_daily_slots` INT NOT NULL DEFAULT 15,
+    `form_fields` LONGTEXT DEFAULT NULL,
+    `updated_at` TIMESTAMP NULL DEFAULT NULL,
     `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ----------------------------------------------------------------------------
+-- 3b. Doctors Directory (admin/doctors.php)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `doctors` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `full_name` VARCHAR(100) NOT NULL,
+    `specialization` VARCHAR(100) DEFAULT NULL,
+    `license_no` VARCHAR(50) DEFAULT NULL,
+    `phone` VARCHAR(20) DEFAULT NULL,
+    `email` VARCHAR(100) DEFAULT NULL,
+    `status` VARCHAR(20) NOT NULL DEFAULT 'active',
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -154,8 +170,8 @@ CREATE TABLE IF NOT EXISTS `prenatal_records` (
     `urine_sugar` VARCHAR(20) DEFAULT 'Negative',
     `hemoglobin_level` DECIMAL(4,1) DEFAULT NULL,
     `vitamins_prescribed` TEXT DEFAULT NULL,
-    `iron_folic_given` TINYINT(1) DEFAULT 1,
-    `tetanus_vaccine_given` VARCHAR(50) DEFAULT 'TT1',
+    `iron_folic_given` VARCHAR(255) DEFAULT NULL,
+    `tetanus_vaccine_given` VARCHAR(100) DEFAULT NULL,
     `risk_assessment` ENUM('low_risk', 'moderate_risk', 'high_risk') DEFAULT 'low_risk',
     `clinical_notes` TEXT DEFAULT NULL,
     `next_visit_date` DATE DEFAULT NULL,
