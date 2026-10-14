@@ -165,3 +165,151 @@ function isSlotAvailable($db, $date, $time) {
     }
     return false;
 }
+
+/* ----------------------------------------------------------------------------
+   Live clinic load (used by api/clinic_load.php, wizard.js, clinic_board.js)
+   ---------------------------------------------------------------------------- */
+
+// Returns a valid Y-m-d string (falls back to today in clinic time)
+function normalizeYmd($value) {
+    $value = trim((string)$value);
+    $d = DateTime::createFromFormat('Y-m-d', $value);
+    if ($d && $d->format('Y-m-d') === $value) return $value;
+    return date('Y-m-d');
+}
+
+// Maps a remaining/capacity pair to the status words the front-end understands
+function clinicLoadStatus($remaining, $capacity) {
+    if ($capacity <= 0 || $remaining <= 0) return 'full';
+    $ratio = $remaining / $capacity;
+    if ($ratio <= 0.25) return 'almost_full';
+    if ($ratio <= 0.6)  return 'busy';
+    return 'open';
+}
+
+// Public counts-only snapshot of one day: hours, per-service seats left, next open slot
+function getClinicLoadForDate($db, $date) {
+    $date = normalizeYmd($date);
+    $slots = getSlotsForDate($db, $date);
+    $bookable = array_values(array_filter($slots, function ($s) {
+        return !$s['is_blocked'] && !$s['is_past'];
+    }));
+    $usable = array_values(array_filter($slots, function ($s) { return !$s['is_blocked']; }));
+
+    $out = [
+        'date'      => $date,
+        'day_label' => date('l, M j', strtotime($date)),
+        'is_today'  => ($date === date('Y-m-d')),
+        'is_closed' => empty($usable),
+        'status'    => 'closed',
+        'hours'     => null,
+        'next_slot' => null,
+        'next_open' => null,
+        'services'  => [],
+    ];
+
+    if (empty($usable)) {
+        // Find the next day (within 14 days) that has slots
+        for ($i = 1; $i <= 14; $i++) {
+            $next = date('Y-m-d', strtotime("$date +$i day"));
+            $nextSlots = array_filter(getSlotsForDate($db, $next), function ($s) { return !$s['is_blocked']; });
+            if ($nextSlots) {
+                $nextSlots = array_values($nextSlots);
+                $out['next_open'] = [
+                    'date'      => $next,
+                    'day_label' => date('l, M j', strtotime($next)),
+                    'hours'     => $nextSlots[0]['time_formatted'] . ' - ' . date('g:i A', strtotime(end($nextSlots)['time']) + 1800),
+                ];
+                break;
+            }
+        }
+    } else {
+        $out['hours'] = [
+            'open'  => $usable[0]['time_formatted'],
+            'close' => date('g:i A', strtotime(end($usable)['time']) + 1800),
+        ];
+    }
+
+    // Overall seats across all slots
+    $totalCap = 0; $totalLeft = 0;
+    foreach ($usable as $s) { $totalCap += $s['capacity']; $totalLeft += $s['available']; }
+    $bookableLeft = 0;
+    foreach ($bookable as $s) { $bookableLeft += $s['available']; }
+
+    if (!$out['is_closed']) {
+        if ($bookableLeft > 0)                 $out['status'] = clinicLoadStatus($bookableLeft, $totalCap);
+        elseif ($date === date('Y-m-d') && $totalLeft > 0) $out['status'] = 'ended';
+        else                                   $out['status'] = 'full';
+    }
+
+    // Per-service daily seats (services.max_daily_slots minus open bookings that day)
+    try {
+        $svcRows = $db->query("SELECT id, service_name, max_daily_slots FROM services WHERE is_active = 1 ORDER BY id")->fetchAll();
+        $cnt = $db->prepare("SELECT service_id, COUNT(*) FROM appointments WHERE appointment_date = ? AND status IN ('pending','confirmed') GROUP BY service_id");
+        $cnt->execute([$date]);
+        $booked = $cnt->fetchAll(PDO::FETCH_KEY_PAIR);
+
+        foreach ($svcRows as $svc) {
+            $cap = (int)$svc['max_daily_slots'];
+            $remaining = max(0, $cap - (int)($booked[$svc['id']] ?? 0));
+            // Bookable seats are limited by the clinic's own remaining slot capacity too
+            $bookableRemaining = min($remaining, $bookableLeft);
+            if ($out['is_closed'])            $st = 'closed';
+            elseif ($remaining <= 0)          $st = 'full';
+            elseif ($bookableLeft <= 0)       $st = 'ended';
+            else                              $st = clinicLoadStatus($bookableRemaining, $cap);
+
+            $out['services'][] = [
+                'id'                 => (int)$svc['id'],
+                'name'               => $svc['service_name'],
+                'capacity'           => $cap,
+                'remaining'          => $remaining,
+                'bookable_remaining' => $bookableRemaining,
+                'status'             => $st,
+            ];
+        }
+    } catch (Exception $e) {
+        // leave services empty
+    }
+
+    if (!empty($bookable)) {
+        foreach ($bookable as $s) {
+            if ($s['available'] > 0) {
+                $out['next_slot'] = [
+                    'time'           => $s['time'],
+                    'time_formatted' => $s['time_formatted'],
+                    'service_name'   => !empty($out['services']) ? $out['services'][0]['name'] : 'Clinic visit',
+                ];
+                break;
+            }
+        }
+    }
+
+    return $out;
+}
+
+// N consecutive days of availability for one service, starting at $startDate
+function getClinicDayStrip($db, $serviceId, $startDate, $days = 14) {
+    $startDate = normalizeYmd($startDate);
+    $days = max(1, min(31, (int)$days));
+    $strip = [];
+    for ($i = 0; $i < $days; $i++) {
+        $d = date('Y-m-d', strtotime("$startDate +$i day"));
+        $load = getClinicLoadForDate($db, $d);
+        $svc = null;
+        foreach ($load['services'] as $s) { if ($s['id'] === (int)$serviceId) { $svc = $s; break; } }
+        $cap = $svc ? $svc['capacity'] : 0;
+        $rem = $svc ? $svc['remaining'] : 0;
+        $strip[] = [
+            'date'        => $d,
+            'weekday'     => date('D', strtotime($d)),
+            'day'         => (int)date('j', strtotime($d)),
+            'is_today'    => ($d === date('Y-m-d')),
+            'status'      => $svc ? $svc['status'] : $load['status'],
+            'remaining'   => $rem,
+            'capacity'    => $cap,
+            'utilization' => $cap > 0 ? (int)round((($cap - $rem) / $cap) * 100) : 100,
+        ];
+    }
+    return $strip;
+}

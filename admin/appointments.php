@@ -265,12 +265,11 @@ include __DIR__ . '/../includes/header.php';
                 </div>
                 <h3 style="margin:0 0 0.5rem 0; font-size:1.1rem;">Delete this appointment?</h3>
                 <p class="text-muted" style="margin:0; font-size:0.85rem;">
-                     action is <strong>permanent</strong> and cannot be undone.
-
+                    This action is <strong>permanent</strong> and cannot be undone.
                 </p>
             </div>
 
-            <div style="background:var(--bg-body); padding:1reKinim; border-radius:10px; margin-top:1rem;">
+            <div style="background:var(--bg-body); padding:1rem; border-radius:10px; margin-top:1rem;">
                 <p style="margin:0 0 0.35rem 0; font-size:0.82rem;"><strong>Code:</strong> <span id="deleteCode">-</span></p>
                 <p style="margin:0; font-size:0.82rem;"><strong>Patient:</strong> <span id="deleteName">-</span></p>
             </div>
