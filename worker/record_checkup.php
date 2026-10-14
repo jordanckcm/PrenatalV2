@@ -14,6 +14,15 @@ $activePage = "records";
 $workerId = getCurrentUserId();
 
 $error = '';
+
+/** True when the appointment is unassigned or assigned to this staff member. */
+function workerOwnsAppointment($db, $appointmentId, $workerId) {
+    $q = $db->prepare("SELECT healthcare_worker_id FROM appointments WHERE id = ?");
+    $q->execute([$appointmentId]);
+    $row = $q->fetch();
+    if (!$row) return false;
+    return empty($row['healthcare_worker_id']) || (int)$row['healthcare_worker_id'] === (int)$workerId;
+}
 $selectedPatientId = (int)($_GET['patient_id'] ?? 0);
 $selectedApptId = (int)($_GET['appointment_id'] ?? 0);
 
@@ -74,6 +83,8 @@ try {
             $error = "Security validation error.";
         } elseif (!$patientId) {
             $error = "Please select a patient.";
+        } elseif ($appointmentId && !workerOwnsAppointment($db, $appointmentId, $workerId)) {
+            $error = "Access denied: this appointment is not assigned to you.";
         } else {
             $db->beginTransaction();
 

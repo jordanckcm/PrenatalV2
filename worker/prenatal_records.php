@@ -171,7 +171,12 @@ include __DIR__ . '/../includes/header.php';
                     </div>
                     <div>
                         <small class="text-muted" style="font-size:0.72rem; font-weight:700; text-transform:uppercase;">Examined By</small>
-                        <p style="margin:0.25rem 0 0 0; font-weight:700;"><?php echo sanitize($record['examiner_name'] ?? 'N/A'); ?></p>
+                        <p style="margin:0.25rem 0 0 0; font-weight:700;"><?php
+                            // PRIVACY: show the examiner's name only to the examiner themselves
+                            if (empty($record['healthcare_worker_id'])) { echo 'N/A'; }
+                            elseif ((int)$record['healthcare_worker_id'] === (int)getCurrentUserId()) { echo 'You'; }
+                            else { echo 'Another staff member'; }
+                        ?></p>
                     </div>
                 </div>
 

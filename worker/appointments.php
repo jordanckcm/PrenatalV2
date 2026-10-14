@@ -20,14 +20,17 @@ try {
     $db = getDB();
 
     $sql = "SELECT a.*, s.service_name, u.full_name as patient_name, u.phone as patient_phone, 
-            p.patient_code, hw.full_name as worker_name
+            p.patient_code
             FROM appointments a
             JOIN patients p ON a.patient_id = p.id
             JOIN users u ON p.user_id = u.id
             JOIN services s ON a.service_id = s.id
-            LEFT JOIN users hw ON a.healthcare_worker_id = hw.id
-            WHERE 1=1";
-    $params = [];
+            WHERE (a.healthcare_worker_id = ?
+                   OR (a.healthcare_worker_id IS NULL AND a.status = 'pending'))";
+    // PRIVACY: a staff member only ever sees (1) appointments assigned to them and
+    // (2) open pending bookings nobody has taken yet. Other staff's patients and
+    // names are never loaded, so they cannot appear in the page or its HTML.
+    $params = [$userId];
 
     if ($statusFilter !== 'all') {
         $sql .= " AND a.status = ?";
@@ -37,6 +40,8 @@ try {
     if ($staffFilter === 'mine') {
         $sql .= " AND a.healthcare_worker_id = ?";
         $params[] = $userId;
+    } elseif ($staffFilter === 'open') {
+        $sql .= " AND a.healthcare_worker_id IS NULL";
     }
 
     if (!empty($dateFilter)) {
@@ -77,8 +82,9 @@ include __DIR__ . '/../includes/header.php';
         </select>
 
         <select name="staff" class="form-control" style="max-width:220px;">
-            <option value="all" <?php echo $staffFilter === 'all' ? 'selected' : ''; ?>>All Staff Appointments</option>
+            <option value="all" <?php echo $staffFilter === 'all' ? 'selected' : ''; ?>>Mine + Open Bookings</option>
             <option value="mine" <?php echo $staffFilter === 'mine' ? 'selected' : ''; ?>>Assigned to Me</option>
+            <option value="open" <?php echo $staffFilter === 'open' ? 'selected' : ''; ?>>Open (Unassigned)</option>
         </select>
 
         <input type="date" name="date" class="form-control" style="max-width:200px;" value="<?php echo sanitize($dateFilter); ?>">
@@ -124,25 +130,23 @@ include __DIR__ . '/../includes/header.php';
                             <span class="badge badge-<?php echo $a['status']; ?>"><?php echo ucfirst($a['status']); ?></span>
                         </td>
                         <td>
-                            <?php if (!empty($a['worker_name'])): ?>
-                                <?php if ((int)$a['healthcare_worker_id'] === (int)$userId): ?>
-                                    <span class="badge badge-confirmed" style="font-size:0.75rem;">
-                                        <i class="fa-solid fa-user-check"></i> ASSIGNED TO YOU
-                                    </span>
-                                <?php else: ?>
-                                    <i class="fa-solid fa-user-doctor text-primary"></i> <?php echo sanitize($a['worker_name']); ?>
-                                <?php endif; ?>
+                            <?php if (!empty($a['healthcare_worker_id'])): ?>
+                                <span class="badge badge-confirmed" style="font-size:0.75rem;">
+                                    <i class="fa-solid fa-user-check"></i> ASSIGNED TO YOU
+                                </span>
                             <?php else: ?>
                                 <span class="badge badge-pending" style="font-size:0.75rem;">Unassigned</span>
                             <?php endif; ?>
                         </td>
-                        <td>
-                            <?php if ($a['status'] === 'confirmed'): ?>
+                        <td style="white-space:nowrap;">
+                            <button type="button" class="btn btn-outline btn-sm js-slip-btn" title="View / Print Appointment Slip"
+                                <?php echo slipButtonAttr($a, $a['patient_name'], !empty($a['healthcare_worker_id']) ? getCurrentUserName() : 'To be assigned by the clinic'); ?>>
+                                <i class="fa-solid fa-receipt"></i> Slip
+                            </button>
+                            <?php if ($a['status'] === 'confirmed' && (int)$a['healthcare_worker_id'] === (int)$userId): ?>
                                 <a href="examine.php?id=<?php echo (int)$a['id']; ?>" class="btn btn-primary btn-sm">
                                     <i class="fa-solid fa-stethoscope"></i> Examine
                                 </a>
-                            <?php else: ?>
-                                <span class="text-muted" style="font-size:0.82rem;">—</span>
                             <?php endif; ?>
                         </td>
                     </tr>
@@ -158,4 +162,5 @@ include __DIR__ . '/../includes/header.php';
     </table>
 </div>
 
+<?php include __DIR__ . '/../includes/appointment_slip.php'; ?>
 <?php include __DIR__ . '/../includes/footer.php'; ?>

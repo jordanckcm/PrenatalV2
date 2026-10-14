@@ -44,7 +44,7 @@ try {
         exit;
     }
     if (!empty($appt['healthcare_worker_id']) && (int)$appt['healthcare_worker_id'] !== $workerId) {
-        echo json_encode(['success' => false, 'message' => 'This appointment is handled by another staff member.']);
+        echo json_encode(['success' => false, 'message' => 'This appointment is not available to you.']);
         exit;
     }
 

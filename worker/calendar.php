@@ -47,7 +47,7 @@ try {
         JOIN users u ON p.user_id = u.id
         JOIN services s ON a.service_id = s.id
         WHERE a.appointment_date BETWEEN ? AND ?
-        AND (a.healthcare_worker_id = ? OR a.healthcare_worker_id IS NULL)
+        AND (a.healthcare_worker_id = ? OR (a.healthcare_worker_id IS NULL AND a.status = 'pending'))
         ORDER BY a.appointment_date ASC, a.appointment_time ASC
     ");
     $stmt->execute([$startDate, $endDate, $userId]);

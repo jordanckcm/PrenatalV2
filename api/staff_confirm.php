@@ -29,7 +29,7 @@ if (!$appointmentId) {
 try {
     $db = getDB();
 
-    $stmt = $db->prepare("SELECT a.id, a.status, a.appointment_code, a.appointment_date, a.appointment_time, p.user_id AS patient_user_id FROM appointments a JOIN patients p ON a.patient_id = p.id WHERE a.id = ?");
+    $stmt = $db->prepare("SELECT a.id, a.status, a.healthcare_worker_id, a.appointment_code, a.appointment_date, a.appointment_time, p.user_id AS patient_user_id FROM appointments a JOIN patients p ON a.patient_id = p.id WHERE a.id = ?");
     $stmt->execute([$appointmentId]);
     $appt = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -39,6 +39,11 @@ try {
     }
     if ($appt['status'] !== 'pending') {
         echo json_encode(['success' => false, 'message' => 'Only pending appointments can be confirmed.']);
+        exit;
+    }
+    // Already assigned to a different staff member: generic message, no name revealed
+    if (!empty($appt['healthcare_worker_id']) && (int)$appt['healthcare_worker_id'] !== $workerId) {
+        echo json_encode(['success' => false, 'message' => 'This appointment is not available to you.']);
         exit;
     }
 

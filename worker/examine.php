@@ -54,6 +54,13 @@ try {
         die("Error: Appointment not found. <a href='appointments.php'>Back to Appointments</a>");
     }
 
+    // PRIVACY: only the staff member this appointment is assigned to may open it.
+    // The message is deliberately generic so it never reveals who it belongs to.
+    if (!empty($appointment['healthcare_worker_id']) && (int)$appointment['healthcare_worker_id'] !== (int)$userId) {
+        http_response_code(403);
+        die("Access denied: this appointment is not assigned to you. <a href='appointments.php'>Back to Appointments</a>");
+    }
+
     if ($appointment['status'] !== 'confirmed') {
         die("Error: Only confirmed appointments can be examined. <a href='appointments.php'>Back</a>");
     }
